@@ -19,7 +19,7 @@
 
 @property (strong, nonatomic) CBCentralManager *centralMgr;
 @property (strong, nonatomic) CBPeripheral         *discoveredPeripheral;
-@property (strong, nonatomic) Payload                *payload;
+//@property (strong, nonatomic) Payload                *payload;
 @property (strong, nonatomic) NSOperationQueue      *queue;
 @property (strong, nonatomic) NSInvocationOperation *blockOp;
 @property (strong, nonatomic) NSMutableArray           *allPeripherals;
@@ -36,9 +36,6 @@
 {
     //start up the CBCentralManager
     _centralMgr = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
-    
-    //store the incoming data
-    _payload = [[Payload alloc] init];
     
     //store all peripherals;
     _allPeripherals = [[NSMutableArray alloc] init];

@@ -21,7 +21,7 @@ typedef unsigned char                   UInt8;
 /*连接蓝牙时的通知 */
 #define CONNECTNOTF              @"connectNotify"
 
-/*发起蓝牙连接时传递给接收者的userinfo的key*/
+/*发起蓝牙连接通知时传递给接收者的userinfo的key*/
 #define NOTIFICATIONKEY           @"IDX"
 
 /*表示信号强弱的图名*/
@@ -42,20 +42,20 @@ typedef unsigned char                   UInt8;
 
 /***********************************************************************************************/
 /***数据帧***/
-//帧类型
-enum frametype
-{
-    frameBroadcast = 0x00,    //广播
-    frameChart = 0x01,           //私聊
-    frameOther = 0x02,          //扩展
-};
 
-//帧头长
+
+/*帧头长*/
 #define FRAMEHEADLEN            6
 
-//每帧最大长度
-#define FRAMEDATALEN            14
+/*每帧数据域最大长度，默认为50字节*/
+#define FRAMEDATALEN           50
 
+/*从帧提取出content的通知*/
+#define READYCONTENT             @"readyContent"
 
+/*帧数据准备好之后发起通知时传递给接收者的userinfo的key*/
+#define CONTENTKEY                @"contentKey"       //数据key
+/*userinfo的key*/
+#define CONTENTTYPE                @"contentType"     //数据类型
 
 #endif /* Constants_h */

@@ -17,3 +17,8 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 // In this header, you should import all the public headers of your framework using statements like #import <BLELAN/PublicHeader.h>
 
 
+@protocol blelanDelegate <NSObject>
+@required
+- (void)UpdatePeripheralList:(NSArray*)list;
+
+@end

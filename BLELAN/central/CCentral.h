@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "helper.h"
 
-@interface CCentral : NSObject
+@interface CCentral : NSObject <CentralDelegate>
 
 -(void) startup;
 -(void) scan;

@@ -216,8 +216,8 @@
     NSLog(@"Peripheral Disconnected");
     self.currentPeripheral = nil;
     
-    // We're disconnected, so start scanning again
-    [self scan];
+    //蓝牙断开通知
+    [[NSNotificationCenter defaultCenter] postNotificationName:DISCONNECTNOTF object:nil];
 }
 
 #pragma mark - peripheral delegate
@@ -254,9 +254,10 @@
             //广播频道特性, 订阅之
             [peripheral setNotifyValue:YES forCharacteristic:character];
         }else if ([character.UUID isEqual:[CBUUID UUIDWithString:CHATCHARACTERUUID]]){
-            //聊天频道特性，do nothing
+            //点播频道特性，do nothing
         }
     }
+    //接下来等待数据到来
 }
 
 /*
@@ -268,6 +269,8 @@
         ALERT(@"接受数据失败", (@"Error discovering characteristics: %@", [error localizedDescription]));
         return;
     }
+    
+    //接收外设数据
     
     
 }

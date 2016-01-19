@@ -7,7 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "helper.h"
 
-@interface CPeripheral : NSObject
+
+@interface CPeripheral : NSObject <PeripheralDelegate>
 
 @end

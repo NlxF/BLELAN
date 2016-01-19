@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "comm.h"
 
 //! Project version number for BLELAN.
 FOUNDATION_EXPORT double BLELANVersionNumber;
@@ -14,11 +15,33 @@ FOUNDATION_EXPORT double BLELANVersionNumber;
 //! Project version string for BLELAN.
 FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
-// In this header, you should import all the public headers of your framework using statements like #import <BLELAN/PublicHeader.h>
 
 
-@protocol blelanDelegate <NSObject>
-@required
-- (void)UpdatePeripheralList:(NSArray*)list;
+@protocol BlelanDelegate <NSObject>
+
+- (BOOL)isSendSuccussful;
+
+- (NSData *)recvData;
+
+- (NSString *)recvMessage;
+
+@end
+
+
+@interface LightAir : NSObject
+
+- (instancetype)initWithType:(LightAirType)type;
+
+- (void)startScanning;
+
+- (void)setSuspended:(BOOL)suspended;
+
+- (void)cancel;
+
+- (void)setDelegate:(id<BlelanDelegate>)delegate;
+
+- (void)sendMessageWithString:(NSString *)string;
+
+- (void)sendMessageWithData:(NSData *)data;
 
 @end

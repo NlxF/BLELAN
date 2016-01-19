@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		57A6E37F1C48E7DA00902F01 /* BLELAN.h in Headers */ = {isa = PBXBuildFile; fileRef = 57A6E37E1C48E7DA00902F01 /* BLELAN.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		57CEABA51C4E23E10064B3AB /* BLELAN.m in Sources */ = {isa = PBXBuildFile; fileRef = 57CEABA41C4E23E10064B3AB /* BLELAN.m */; };
+		57CEABAB1C4E2C790064B3AB /* comm.h in Sources */ = {isa = PBXBuildFile; fileRef = 57CEABAA1C4E2C790064B3AB /* comm.h */; };
 		7A9D0A751C49D6BF006F1F71 /* CentralManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A731C49D6BF006F1F71 /* CentralManager.h */; };
 		7A9D0A761C49D6BF006F1F71 /* CentralManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A741C49D6BF006F1F71 /* CentralManager.m */; };
 		7A9D0A791C49DE8F006F1F71 /* CPeripheral.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A771C49DE8F006F1F71 /* CPeripheral.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -31,6 +33,8 @@
 		57A6E37B1C48E7DA00902F01 /* BLELAN.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLELAN.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		57A6E37E1C48E7DA00902F01 /* BLELAN.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLELAN.h; sourceTree = "<group>"; };
 		57A6E3801C48E7DA00902F01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		57CEABA41C4E23E10064B3AB /* BLELAN.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLELAN.m; sourceTree = "<group>"; };
+		57CEABAA1C4E2C790064B3AB /* comm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = comm.h; sourceTree = "<group>"; };
 		7A9D0A731C49D6BF006F1F71 /* CentralManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CentralManager.h; path = peripheral/CentralManager.h; sourceTree = "<group>"; };
 		7A9D0A741C49D6BF006F1F71 /* CentralManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CentralManager.m; path = peripheral/CentralManager.m; sourceTree = "<group>"; };
 		7A9D0A771C49DE8F006F1F71 /* CPeripheral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CPeripheral.h; path = peripheral/CPeripheral.h; sourceTree = "<group>"; };
@@ -88,7 +92,9 @@
 				7A9D0A721C49D582006F1F71 /* As a peripheral */,
 				7A9D0A711C49D568006F1F71 /* As a Central */,
 				57A6E37E1C48E7DA00902F01 /* BLELAN.h */,
+				57CEABA41C4E23E10064B3AB /* BLELAN.m */,
 				57A6E3801C48E7DA00902F01 /* Info.plist */,
+				57CEABAA1C4E2C790064B3AB /* comm.h */,
 			);
 			path = BLELAN;
 			sourceTree = "<group>";
@@ -240,7 +246,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A9D0A941C4A9515006F1F71 /* PeripheralListViewController.m in Sources */,
+				57CEABA51C4E23E10064B3AB /* BLELAN.m in Sources */,
 				7A9D0A7E1C49DEC7006F1F71 /* CCentral.m in Sources */,
+				57CEABAB1C4E2C790064B3AB /* comm.h in Sources */,
 				7A9D0A761C49D6BF006F1F71 /* CentralManager.m in Sources */,
 				7A9D0AA31C4B9577006F1F71 /* Payload.m in Sources */,
 				7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */,

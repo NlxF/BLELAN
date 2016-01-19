@@ -20,6 +20,8 @@ typedef unsigned char                   UInt8;
 
 /*连接蓝牙时的通知 */
 #define CONNECTNOTF              @"connectNotify"
+/*蓝牙断开时的通知*/
+#define DISCONNECTNOTF            @"disconnectNotify"
 
 /*发起蓝牙连接通知时传递给接收者的userinfo的key*/
 #define NOTIFICATIONKEY           @"IDX"

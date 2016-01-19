@@ -13,7 +13,7 @@
 -(void) startup;
 -(void) scan;
 -(void) stop;
--(void) connect;
+-(void) connect:(NSNotification*)notification;
 -(void) explore;
 -(void) read;
 -(void) write;

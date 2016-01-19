@@ -18,8 +18,7 @@
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 
 @property (strong, nonatomic) CBCentralManager *centralMgr;
-@property (strong, nonatomic) CBPeripheral         *discoveredPeripheral;
-//@property (strong, nonatomic) Payload                *payload;
+@property (strong, nonatomic) CBPeripheral         *currentPeripheral;
 @property (strong, nonatomic) NSOperationQueue      *queue;
 @property (strong, nonatomic) NSInvocationOperation *blockOp;
 @property (strong, nonatomic) NSMutableArray           *allPeripherals;
@@ -76,6 +75,9 @@
     [rootViewController presentViewController:_listView animated:YES completion:^{
         NSLog(@"Show Peripheral List");
     }];
+    
+    //注册连接事件
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(connect:) name:CONNECTNOTF object:nil];
 }
 
 /*
@@ -109,9 +111,15 @@
 }
 
 
-- (void)connect
+- (void)connect:(NSNotification*)notification
 {
+    NSDictionary *userinfo =  notification.userInfo;
+    NSIndexPath *indexPath = [userinfo objectForKey:NOTIFICATIONKEY];
     
+    _currentPeripheral = [_allPeripherals objectAtIndex:indexPath.row];
+    [self.centralMgr connectPeripheral:_currentPeripheral options:nil];
+    
+    NSLog(@"Connecting to peripheral %@", _currentPeripheral);
 }
 
 
@@ -121,19 +129,22 @@
 - (void)cleanup
 {
     // See if we are subscribed to a characteristic on the peripheral
-    if (self.discoveredPeripheral.services != nil) {
-        for (CBService *service in self.discoveredPeripheral.services) {
+    if (self.currentPeripheral.services != nil) {
+        for (CBService *service in self.currentPeripheral.services) {
             if (service.characteristics != nil) {
                 for (CBCharacteristic *characteristic in service.characteristics) {
                     if (characteristic.isNotifying) {
                         // It is notifying, so unsubscribe
-                        [self.discoveredPeripheral setNotifyValue:NO forCharacteristic:characteristic];
+                        [self.currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
                     }
                 }
             }
         }
     }// If we've got this far, we're connected, but we're not subscribed, so we just disconnect
-    [self.centralMgr cancelPeripheralConnection:self.discoveredPeripheral];
+    [self.centralMgr cancelPeripheralConnection:self.currentPeripheral];
+    
+    //移除连接事件
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:CONNECTNOTF object:nil];
 }
 
 #pragma mark - CBCentralManagerDelegate
@@ -148,7 +159,7 @@
     }
     
     // Reject if the signal strength is too low to be close enough (Close is around -22dB)
-    if (RSSI.integerValue < -35) {
+    if (RSSI.integerValue < -95) {
         return;
     }
     
@@ -192,7 +203,7 @@
     //设置代理
     peripheral.delegate = self;
     
-    //只搜索匹配的UUID
+    //只搜索匹配UUID的服务
     [peripheral discoverServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID], [CBUUID UUIDWithString:SERVICECHATUUID]]];
     
 }
@@ -202,6 +213,11 @@
  */
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
+    NSLog(@"Peripheral Disconnected");
+    self.currentPeripheral = nil;
+    
+    // We're disconnected, so start scanning again
+    [self scan];
 }
 
 #pragma mark - peripheral delegate
@@ -252,8 +268,8 @@
         ALERT(@"接受数据失败", (@"Error discovering characteristics: %@", [error localizedDescription]));
         return;
     }
-    //_data = characteristic.value;
-    //characteristic.hash;
+    
+    
 }
 
 /*
@@ -261,6 +277,9 @@
  */
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
+    if (error) {
+        NSLog(@"Error changing notification state: %@", error.localizedDescription);
+    }
 }
 
 @end

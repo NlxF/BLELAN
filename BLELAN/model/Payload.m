@@ -101,14 +101,17 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
 
 - (void)contentFromPayload:(NSData *)payload
 {
-    
     Payload p;
-    memset(&payload, '\0', sizeof(p));
+    memset(&p, '\0', sizeof(p));
     [payload getBytes:&p length:[payload length]];
     if (p.local == 0) {
+        strcpy(payloadBuff, p.data);
         isNotify = YES;
     }else{
-        
+        if (isFinish(p.local)){
+            isNotify = YES;
+        }
+        strcat(payloadBuff, p.data);
     }
     if (isNotify) {
         NSData *data = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];

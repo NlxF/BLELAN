@@ -33,14 +33,14 @@ typedef struct
 
 /***帧类型组合***/
 //1.具体业务
-#define MakeGameFrame   {0x0, 0x0}
+#define MakeGameFrame          {0x0, 0x0}
 //2.群聊
-#define MakeOneToMany   {0x1, 0x0}
+#define MakeOneToManyFrame   {0x1, 0x0}
 //3.私聊
-#define MakeOneToOne    {0x1, 0x1}
+#define MakeOneToOneFrame    {0x1, 0x1}
 
-/***判断最高位是否置1***/
-#define isFinish(arg)    arg 
+/***判断是否结束帧***/
+#define isFinish(arg)    arg&0x80
 typedef struct
 {
     UInt8 dst;                                  //目的设备在设备列表中的索引;

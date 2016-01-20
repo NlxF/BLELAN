@@ -18,8 +18,8 @@ typedef unsigned char                   UInt8;
 /*tableview cell 标识*/
 #define REUSEIDENTIFIER           @"reuseIdentifier"
 
-/*连接蓝牙时的通知 */
-#define CONNECTNOTF              @"connectNotify"
+/*蓝牙连接时的通知*/
+#define CONNECTNOTF               @"connectNotify"
 /*蓝牙断开时的通知*/
 #define DISCONNECTNOTF            @"disconnectNotify"
 
@@ -53,7 +53,7 @@ typedef unsigned char                   UInt8;
 #define FRAMEDATALEN           50
 
 /*从帧提取出content的通知*/
-#define READYCONTENT             @"readyContent"
+//#define READYCONTENT             @"readyContent"
 
 /*帧数据准备好之后发起通知时传递给接收者的userinfo的key*/
 #define CONTENTKEY                @"contentKey"       //数据key

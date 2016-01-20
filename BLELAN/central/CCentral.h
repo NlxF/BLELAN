@@ -8,16 +8,19 @@
 
 #import <Foundation/Foundation.h>
 #import "helper.h"
+#import "comm.h"
+
 
 @interface CCentral : NSObject <CentralDelegate>
 
--(void) startup;
+- (instancetype)init;
+
 -(void) scan;
 -(void) stop;
 -(void) connect:(NSNotification*)notification;
--(void) explore;
 -(void) read;
 -(void) write;
 -(void) subscribe;
+- (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 @end

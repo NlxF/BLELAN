@@ -10,12 +10,14 @@
 
 @interface PayloadMgr()
 {
-    //发送的总的消息个数
+    //发送的总的消息个数,based on 1
     UInt16 globalIdx;
     //缓存
     char payloadBuff[512];
     //是否发通知
     bool isNotify;
+    //当前帧global索引
+    UInt16 curGlobal;
 }
 @end
 
@@ -35,7 +37,8 @@
 {
     self = [super init];
     if (self) {
-        globalIdx = 0;
+        globalIdx = 1;
+        curGlobal = 1;
         memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
     }
@@ -70,7 +73,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
         Payload payload;
         payload.dst = dstIdx;
         payload.src = srcIdx;
-        payload.type = type;
+        payload.FType = type;
         if (idx == arrCnt-1 && arrCnt != 1) {                  //if 当前为分帧的最后一桢
             //分帧最后一桢                                      //    则需将local置为idx + 1, 并且最高位置1
             payload.local = idx + 1;                           //else
@@ -78,7 +81,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
         }else                                                  //       则将local置 0
             payload.local = arrCnt == 1 ? 0 : idx + 1;         //    else
                                                                //       则将local置为 idx+ 1
-        payload.global = globalIdx++;
+        payload.global = globalIdx > 65535 ? 1: globalIdx++;
         [da getBytes:payload.data length:[da length]];
         [payloadArray addObject:[NSData dataWithBytes:&payloadArray length:6+[da length]]];
     }
@@ -99,9 +102,10 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
 }
 
 
-- (void)contentFromPayload:(NSData *)payload
+- (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue
 {
     Payload p;
+    NSData *retData;
     memset(&p, '\0', sizeof(p));
     [payload getBytes:&p length:[payload length]];
     if (p.local == 0) {
@@ -110,15 +114,31 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
     }else{
         if (isFinish(p.local)){
             isNotify = YES;
+        }else if(p.local == 1)
+            curGlobal = p.global;
+        
+        if (curGlobal == p.local) {
+            strcat(payloadBuff, p.data);
         }
-        strcat(payloadBuff, p.data);
+        
     }
+    FrameType retType;
     if (isNotify) {
-        NSData *data = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];
-        [[NSNotificationCenter defaultCenter] postNotificationName:READYCONTENT object:nil userInfo:@{CONTENTKEY: data}];
+        retData = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];
+        if (isGameFrame(p.FType)) {
+            FrameType tmp = MakeGameFrame;
+            retType = tmp;
+            *retValue = retData;
+        }else{
+            FrameType tmp = MakeOneToManyFrame;
+            retType = tmp;
+            NSString *retStr = [[NSString alloc] initWithData:retData encoding:NSUTF8StringEncoding];
+            *retValue = retStr;
+        }
         memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
     }
+    return retType;
 }
 
 @end

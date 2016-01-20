@@ -16,18 +16,6 @@ FOUNDATION_EXPORT double BLELANVersionNumber;
 FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 
-
-@protocol BlelanDelegate <NSObject>
-
-- (BOOL)isSendSuccussful;
-
-- (NSData *)recvData;
-
-- (NSString *)recvMessage;
-
-@end
-
-
 @interface LightAir : NSObject
 
 - (instancetype)initWithType:(LightAirType)type;

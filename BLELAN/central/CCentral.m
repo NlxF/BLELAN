@@ -17,7 +17,8 @@
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 
-@property (strong, nonatomic) CBCentralManager *centralMgr;
+@property (strong, nonatomic) id<BlelanDelegate>   delegate;
+@property (strong, nonatomic) CBCentralManager     *centralMgr;
 @property (strong, nonatomic) CBPeripheral         *currentPeripheral;
 @property (strong, nonatomic) NSOperationQueue      *queue;
 @property (strong, nonatomic) NSInvocationOperation *blockOp;
@@ -27,17 +28,24 @@
 
 @implementation CCentral
 
-#pragma mark - attribute methods
-
-
 #pragma mark - CCentral methods
-- (void)startup
+
+- (instancetype)init
 {
-    //start up the CBCentralManager
-    _centralMgr = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
-    
-    //store all peripherals;
-    _allPeripherals = [[NSMutableArray alloc] init];
+    self = [super init];
+    if (self) {
+        //start up the CBCentralManager
+        _centralMgr = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+        
+        //store all peripherals;
+        _allPeripherals = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (void)setDelegate:(id<BlelanDelegate>)delegate
+{
+    _delegate = delegate;
 }
 
 /*
@@ -220,6 +228,16 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:DISCONNECTNOTF object:nil];
 }
 
+- (void)centralManagerDidUpdateState:(CBCentralManager *)central
+{
+    if (central.state != CBCentralManagerStatePoweredOn) {
+        // In a real app, you'd deal with all the states correctly
+        return;
+    }
+    
+    // The state must be CBCentralManagerStatePoweredOn...
+}
+
 #pragma mark - peripheral delegate
 /*
  * 发现外设提供的服务
@@ -271,8 +289,14 @@
     }
     
     //接收外设数据
-    
-    
+    NSData *data = characteristic.value;
+    id recvValue;
+    FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
+    if(isGameFrame(frameType)){
+        [_delegate recvData:(NSData*)recvValue];
+    }else{
+        [_delegate recvMessage:(NSString *)recvValue];
+    }
 }
 
 /*
@@ -282,6 +306,16 @@
 {
     if (error) {
         NSLog(@"Error changing notification state: %@", error.localizedDescription);
+    }
+    if (characteristic.isNotifying) {
+        NSLog(@"Notification began on %@", characteristic);
+    }
+    
+    // Notification has stopped
+    else {
+        // so disconnect from the peripheral
+        NSLog(@"Notification stopped on %@.  Disconnecting", characteristic);
+        [self.centralMgr cancelPeripheralConnection:peripheral];
     }
 }
 

@@ -12,4 +12,10 @@
 
 @interface CPeripheral : NSObject <PeripheralDelegate>
 
+- (instancetype)init;
+
+- (void)startAdvertising;
+
+- (void)stopAdvertising;
+
 @end

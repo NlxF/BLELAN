@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "helper.h"
-#import "comm.h"
+#import "BLELAN.h"
 
 
 @interface CCentral : NSObject <CentralDelegate>
@@ -16,11 +16,10 @@
 - (instancetype)init;
 
 -(void) scan;
--(void) stop;
+-(void) cancel;
 -(void) connect:(NSNotification*)notification;
--(void) read;
--(void) write;
--(void) subscribe;
+
+
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 @end

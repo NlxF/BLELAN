@@ -5,9 +5,12 @@
 //  Created by luxiaofei on 16/1/17.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
+#import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreBluetooth/CoreBluetooth.h>
+#import "comm.h"
+
 
 #define ALERT(title, msg)  UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:nil  cancelButtonTitle:@"ok" otherButtonTitles: nil];\
     [alert show];
@@ -18,6 +21,7 @@
 @protocol commDelegate <NSObject>
 
 - (void)send:(NSData*)data type:(int)type;
+
 
 @end
 
@@ -48,5 +52,7 @@ typedef struct
 + (CGRect) getCurrentDeviceRect;
 
 + (NSString *)imageNameBySignal:(float)value;
+
++ (void)returnError:(SDKErrCode)errCode msg:(NSString*)resultMsg detail:(NSString*)datailMsg userinfo:(NSDictionary*)userinfo;
 
 @end

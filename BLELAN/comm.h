@@ -10,20 +10,6 @@
 
 
 /**
- *  结果回调，用来接收蓝牙数据或者查看是否发送成功，数据是串行到达。
- */
-@protocol BlelanDelegate <NSObject>
-
-- (BOOL)isSendSuccussful;
-
-- (void)recvData:(NSData *)data;
-
-- (void)recvMessage:(NSString *)string;
-
-@end
-
-
-/**
  初始化LightAir时指定的类型
  */
 typedef enum

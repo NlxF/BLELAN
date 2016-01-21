@@ -28,4 +28,17 @@
     return SIGNALLOW;
 }
 
++ (void)returnError:(SDKErrCode)errCode msg:(NSString*)resultMsg detail:(NSString*)datailMsg userinfo:(NSDictionary*)userinfo
+{
+    SDKResp *resp = [[SDKResp alloc] init];
+    resp.result_code = errCode;
+    resp.result_msg = resultMsg;
+    resp.err_detail = datailMsg;
+    resp.userinfo = userinfo;
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+    });
+}
+
 @end

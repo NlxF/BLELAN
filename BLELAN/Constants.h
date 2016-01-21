@@ -41,11 +41,11 @@ typedef unsigned char                   UInt8;
 #define   SERVICECHATUUID                          @"F5F389F7-6372-4459-9575-FEE90F571195"
 //聊天频道服务的特性的UUID
 #define  CHATCHARACTERUUID                      @"DC2D2BC7-8C98-4346-BD92-E6D98D9AF1B0"
-
+//设备名称特性的UUID
+#define  NAMECHARACTERUUID                      @"015B566C-A57F-4FEF-8178-C69B75FEB439"
 /***********************************************************************************************/
-/***数据帧***/
 
-
+/***************************数据帧******************************/
 /*帧头长*/
 #define FRAMEHEADLEN            6
 

@@ -5,10 +5,9 @@
 //  Created by luxiaofei on 16/1/16.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
+#import <CoreBluetooth/CoreBluetooth.h>
 
 #import "CCentral.h"
-#import <UIKit/UIKit.h>
-#import <CoreBluetooth/CoreBluetooth.h>
 #import "BLELAN.h"
 #import "helper.h"
 #import "Constants.h"
@@ -35,7 +34,9 @@
     self = [super init];
     if (self) {
         //start up the CBCentralManager
-        _centralMgr = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+        _centralMgr = [[CBCentralManager alloc] initWithDelegate:self
+                                                           queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+                                                         options:@{CBCentralManagerOptionRestoreIdentifierKey:@1}];
         
         //store all peripherals;
         _allPeripherals = [[NSMutableArray alloc] init];
@@ -51,10 +52,10 @@
 /*
  * task of scan
  */
-- (void)performScan
+- (void)performScanning
 {
     [self.centralMgr scanForPeripheralsWithServices:nil
-                                            options:@{ CBCentralManagerScanOptionAllowDuplicatesKey : @YES }];
+                                            options:@{ CBCentralManagerScanOptionAllowDuplicatesKey : @0 }];
 }
 
 /*
@@ -62,18 +63,16 @@
  */
 - (void)scan
 {
-    if (_centralMgr == nil) {
-        ALERT(@"失败", @"未初始化, 需先调用startup()");
-        return;
-    }
-    if (_blockOp == nil) {
-        _blockOp = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(performScan) object:nil];
-    }
-    if (_queue == nil) {
-        _queue = [[NSOperationQueue alloc] init];
-    }
-    
-    [_queue addOperation:_blockOp];
+//    if (_blockOp == nil) {
+//        _blockOp = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(performScanning) object:nil];
+//    }
+//    if (_queue == nil) {
+//        _queue = [[NSOperationQueue alloc] init];
+//    }
+//    
+//    [_queue addOperation:_blockOp];
+
+    [self performScanning];
     
     NSLog(@"Scanning started");
     
@@ -97,26 +96,28 @@
     //清空外设列表
     _allPeripherals = nil;
     //停止扫描
-    [self.centralMgr stopScan];
+    if (self.centralMgr.isScanning) {
+        [self.centralMgr stopScan];
+    }
     
     [_listView dismissModalViewControllerAnimated:YES];
 }
 
-/*
- * 暂停扫描
- */
-- (void)stop
-{
-    [_queue setSuspended:YES];
-}
-
-/*
- * 继续扫描
- */
-- (void)resume
-{
-    [_queue setSuspended:NO];
-}
+///*
+// * 暂停扫描
+// */
+//- (void)stop
+//{
+//    [_queue setSuspended:YES];
+//}
+//
+///*
+// * 继续扫描
+// */
+//- (void)resume
+//{
+//    [_queue setSuspended:NO];
+//}
 
 
 - (void)connect:(NSNotification*)notification
@@ -279,12 +280,12 @@
 }
 
 /*
- * This callback lets us know more data has arrived via notification on the characteristic
+ * 调用readValueForCharacteristic: 后的回调
  */
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error) {
-        ALERT(@"接受数据失败", (@"Error discovering characteristics: %@", [error localizedDescription]));
+        ALERT(@"接受数据失败", [error localizedDescription]);
         return;
     }
     
@@ -300,7 +301,7 @@
 }
 
 /*
- * The peripheral letting us know whether our subscribe/unsubscribe happened or not
+ * 订阅特性之后的回调
  */
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
@@ -319,4 +320,9 @@
     }
 }
 
+//写入特性之后的回调
+- (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
+{
+    
+}
 @end

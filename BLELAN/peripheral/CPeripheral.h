@@ -7,15 +7,16 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "helper.h"
-
+#import "BLELAN.h"
 
 @interface CPeripheral : NSObject <PeripheralDelegate>
 
-- (instancetype)init;
+- (instancetype)initWithName:(NSString*)name;
 
 - (void)startAdvertising;
 
 - (void)stopAdvertising;
+
+- (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 @end

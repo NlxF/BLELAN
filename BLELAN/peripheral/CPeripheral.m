@@ -7,31 +7,41 @@
 //
 
 #import <CoreBluetooth/CoreBluetooth.h>
+#import "helper.h"
 #import "Constants.h"
 #import "CPeripheral.h"
 #import "CentralManager.h"
+
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 
 @property (nonatomic, strong) CBPeripheralManager *peripheralMgr;
 @property (nonatomic, strong) CBMutableCharacteristic *broadcastCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *chatCharacteristic;
+
 @property (nonatomic, strong) CentralManager *centralsMgr;
+@property (nonatomic, strong) id<BlelanDelegate> delegate;
+@property (nonatomic, strong) NSString *peripheralName;
 
 @end
 
 @implementation CPeripheral
 
 #pragma mark - custom methods
-- (instancetype)init
+- (instancetype)initWithName:(NSString*)name
 {
     self = [super init];
     if (self) {
         // Start up the CBPeripheralManager
-        _peripheralMgr = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil];
+        _peripheralMgr = [[CBPeripheralManager alloc] initWithDelegate:self
+                                                                 queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+                                                               options:@{CBPeripheralManagerOptionShowPowerAlertKey:@1}];
 
         //初始化中心管理器
         _centralsMgr   = [[CentralManager alloc] init];
+        
+        //外设名
+        _peripheralName = name;
     }
     return self;
 }
@@ -39,7 +49,9 @@
 
 - (void)startAdvertising
 {
-    [self.peripheralMgr startAdvertising:@{ CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID], [CBUUID UUIDWithString:SERVICECHATUUID]] }];
+    [self.peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: _peripheralName,
+                                            CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID], [CBUUID UUIDWithString:SERVICECHATUUID]]
+                                            }];
     
 }
 
@@ -47,6 +59,11 @@
 - (void)stopAdvertising
 {
     [self.peripheralMgr stopAdvertising];
+}
+
+- (void)setDelegate:(id<BlelanDelegate>)delegate
+{
+    _delegate = delegate;
 }
 
 #pragma mark - Peripheral Manager Delegate Methods
@@ -57,10 +74,6 @@
     if (peripheral.state != CBPeripheralManagerStatePoweredOn) {
         return;
     }
-    
-    // We're in CBPeripheralManagerStatePoweredOn state...
-    NSLog(@"self.peripheralManager powered on.");
-    
     
     //广播频道特性
     self.broadcastCharacteristic = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
@@ -85,9 +98,11 @@
     broadcastService.characteristics = @[self.broadcastCharacteristic];
     chatService.characteristics = @[self.chatCharacteristic];
     
-    //外设添加服务
+    //发布服务和特性
     [self.peripheralMgr addService:broadcastService];
     [self.peripheralMgr addService:chatService];
+    
+    NSLog(@"发布服务");
 }
 
 //发布服务后的回调
@@ -95,8 +110,7 @@
 {
     if (error)
     {
-        NSLog(@"Error publishing service: %@", [error localizedDescription]);
-        //失败通知
+        ALERT(@"服务发布失败", [error localizedDescription]);
     }
 }
 
@@ -107,9 +121,23 @@
     
     if (error)
     {
-        NSLog(@"Error advertising: %@", [error localizedDescription]);
+        ALERT(@"广播失败", [error localizedDescription]);
     }
 }
+
+//接收到中心端读取特性的请求, (发送数据)
+- (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveReadRequest:(CBATTRequest *)request
+{
+    // 对请求作出成功响应
+    [self.peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
+}
+
+//接收到中心端写特性的请求，(接收数据)
+- (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveWriteRequests:(NSArray<CBATTRequest *> *)requests
+{
+    [self.peripheralMgr respondToRequest:requests[0] withResult:CBATTErrorSuccess];
+}
+
 
 /** Catch when someone subscribes to our characteristic
  */
@@ -119,9 +147,14 @@
     
     //将订阅特性的中心存储到中心管理器
     [self.centralsMgr addCentral:central];
+    
+    _chatCharacteristic = characteristic;
+    NSData *updatedData = characteristic.value;
+    [self.peripheralMgr updateValue:updatedData forCharacteristic:(CBMutableCharacteristic*)characteristic onSubscribedCentrals:nil];
 }
 
-/** Recognise when the central unsubscribes
+/*
+ * 取消订阅特性
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic
 {
@@ -131,13 +164,13 @@
     [self.centralsMgr removeCentral:central];
 }
 
-/** This callback comes in when the PeripheralManager is ready to send the next chunk of data.
- *  This is to ensure that packets will arrive in the order they are sent
- *  发送失败后的回调，再次继续发送
+/*
+ * 当传输队列有可用的空间时，在此重新发送数据。
  */
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
     
+    [self.peripheralMgr updateValue:_chatCharacteristic.value forCharacteristic:_chatCharacteristic onSubscribedCentrals:nil];
 }
 
 

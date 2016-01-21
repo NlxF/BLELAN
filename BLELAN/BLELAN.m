@@ -18,9 +18,10 @@
     BOOL  isCentral;
 }
 
-@property (nonatomic, strong) id<CentralDelegate> central;
-@property (nonatomic, strong) id<PeripheralDelegate> peripheral;
+@property (nonatomic, strong) CCentral<CentralDelegate>* central;
+@property (nonatomic, strong) CPeripheral<PeripheralDelegate>* peripheral;
 @property (nonatomic, strong) id<BlelanDelegate>  delegate;
+@property (nonatomic, strong) NSMutableArray *allDevices;
 
 @end
 
@@ -32,33 +33,61 @@
  *
  *  @param type 指定实例类型
  *
+ *  @param delegate 实现BlelanDelegate协议的对象实例
+ *
  *  @return LightAir实例
  */
-- (instancetype)initWithType:(LightAirType)type
+- (instancetype)initWithType:(LightAirType)type delegate:(id<BlelanDelegate>)delegate
 {
     self = [super init];
     if (self) {
+        _delegate = delegate;
         if (type == PeripheralType) {
-            _peripheral = [[CPeripheral alloc] init];
+            _peripheral = [[CPeripheral alloc] initWithName:@"testPeripheral"];
             isCentral = NO;
+            [_peripheral setDelegate:delegate];
         }else{
             _central = [[CCentral alloc] init];
             isCentral = YES;
+            [_central setDelegate:delegate];
         }
     }
     return self;
 }
 
 /**
- *  设置代理
+ *  返回所有设备的名称列表
  *
- *  @param delegate 实现BlelanDelegate协议的对象实例
+ *  @return 设备名数组
  */
-- (void)setDelegate:(id<BlelanDelegate>)delegate
+- (NSArray *)allDevices
 {
-    _delegate = delegate;
+    return (NSArray*)_allDevices;
 }
 
+/**
+ *  启动设备，作为外设，或者中心，如果为外设则开启广播，如果为中心则开始扫描
+ */
+- (void)startDevice
+{
+    if(isCentral){
+        [_central scan];
+    }else{
+        [_peripheral startAdvertising];
+    }
+}
+
+/**
+ *  停止设备动作，如果为外设则停止广播，如果为中心则停止扫描
+ */
+- (void)stopDevice
+{
+    if(isCentral){
+        [_central cancel];
+    }else{
+        [_peripheral stopAdvertising];
+    }
+}
 
 /**
  *  发送数据

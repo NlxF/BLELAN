@@ -7,7 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
 
 @interface CentralManager : NSObject
 
+- (void)addCentral:(CBCentral *)central;
+- (void)removeCentral:(CBCentral *)central;
 @end

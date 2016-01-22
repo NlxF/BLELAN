@@ -16,20 +16,21 @@
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 
-@property (strong, nonatomic) id<BlelanDelegate>   delegate;
-@property (strong, nonatomic) CBCentralManager     *centralMgr;
-@property (strong, nonatomic) CBPeripheral         *currentPeripheral;
-@property (strong, nonatomic) NSOperationQueue      *queue;
-@property (strong, nonatomic) NSInvocationOperation *blockOp;
-@property (strong, nonatomic) NSMutableArray           *allPeripherals;
-@property (strong, nonatomic) PeripheralListViewController   *listView;
+@property (strong, nonatomic) id<BlelanDelegate>           delegate;
+@property (strong, nonatomic) CBCentralManager             *centralMgr;
+@property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
+@property (strong, nonatomic) NSOperationQueue             *queue;
+@property (strong, nonatomic) NSInvocationOperation        *blockOp;
+@property (strong, nonatomic) NSMutableArray               *allPeripherals;
+@property (strong, nonatomic) PeripheralListViewController *listView;
+@property (strong, nonatomic) NSString                     *deciveName;
 @end
 
 @implementation CCentral
 
 #pragma mark - CCentral methods
 
-- (instancetype)init
+- (instancetype)initWithName:(NSString*)name;
 {
     self = [super init];
     if (self) {
@@ -40,6 +41,9 @@
         
         //store all peripherals;
         _allPeripherals = [[NSMutableArray alloc] init];
+        
+        //device name
+        _deciveName = name;
     }
     return self;
 }
@@ -156,7 +160,7 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:CONNECTNOTF object:nil];
 }
 
-#pragma mark - CBCentralManagerDelegate
+#pragma mark - CBCentralManager Delegate
 /*
  * this callback comes whenever a peripheral is discovered，need run in new thread
  */
@@ -213,7 +217,7 @@
     peripheral.delegate = self;
     
     //只搜索匹配UUID的服务
-    [peripheral discoverServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID], [CBUUID UUIDWithString:SERVICECHATUUID]]];
+    [peripheral discoverServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]];
     
 }
 
@@ -252,7 +256,7 @@
     }
     //继续发现感兴趣的特性
     for(CBService *service in peripheral.services){
-        [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:BROADCASTCHARACTERUUID], [CBUUID UUIDWithString:CHATCHARACTERUUID]] forService:service];
+        [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:BROADCASTCHARACTERUUID], [CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]] forService:service];
     }
 }
 
@@ -269,18 +273,19 @@
     }
     
     for (CBCharacteristic *character in service.characteristics) {
-        if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]) {
-            //广播频道特性, 订阅之
+        if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
+            //发现设备名称特性
+            NSData *centralName = [_deciveName dataUsingEncoding:NSUTF8StringEncoding];
+            [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithoutResponse];
+            //订阅，等待游戏开始后设备列表更新
             [peripheral setNotifyValue:YES forCharacteristic:character];
-        }else if ([character.UUID isEqual:[CBUUID UUIDWithString:CHATCHARACTERUUID]]){
-            //点播频道特性，do nothing
         }
     }
     //接下来等待数据到来
 }
 
 /*
- * 调用readValueForCharacteristic: 后的回调
+ * 调用readValueForCharacteristic: 后或者订阅的特性发生变化的回调
  */
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
@@ -288,15 +293,20 @@
         ALERT(@"接受数据失败", [error localizedDescription]);
         return;
     }
-    
-    //接收外设数据
-    NSData *data = characteristic.value;
-    id recvValue;
-    FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
-    if(isGameFrame(frameType)){
-        [_delegate recvData:(NSData*)recvValue];
+    if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
+        //设备列表更新
+        NSArray *deviceList = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
+        [_delegate deviceList:deviceList error:nil];
+        //发起开始通知
+        [[NSNotificationCenter defaultCenter] postNotificationName:CENTRALSTART object:nil];
     }else{
-        [_delegate recvMessage:(NSString *)recvValue];
+        //接收外设数据
+        NSData *data = characteristic.value;
+        id recvValue;
+        FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
+        if(isGameFrame(frameType)){
+            [_delegate recvData:(NSData*)recvValue];
+        }
     }
 }
 

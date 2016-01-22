@@ -19,4 +19,8 @@
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
+- (NSArray *)deviceList;
+
+- (void)startGame;
+
 @end

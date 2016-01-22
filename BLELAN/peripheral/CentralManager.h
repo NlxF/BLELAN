@@ -11,6 +11,12 @@
 
 @interface CentralManager : NSObject
 
-- (void)addCentral:(CBCentral *)central;
-- (void)removeCentral:(CBCentral *)central;
+- (void)addCentral:(NSString *)central device:(CBCentral *)device;
+
+- (void)removeCentral:(NSString *)central or:(CBCentral *)device;
+
+- (NSArray *)currentCentralList;
+
+- (CBCentral *)getCentralByIndex:(NSUInteger)index;
+
 @end

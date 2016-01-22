@@ -53,6 +53,4 @@ typedef struct
 
 + (NSString *)imageNameBySignal:(float)value;
 
-+ (void)returnError:(SDKErrCode)errCode msg:(NSString*)resultMsg detail:(NSString*)datailMsg userinfo:(NSDictionary*)userinfo;
-
 @end

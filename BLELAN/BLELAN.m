@@ -18,10 +18,9 @@
     BOOL  isCentral;
 }
 
-@property (nonatomic, strong) CCentral<CentralDelegate>* central;
-@property (nonatomic, strong) CPeripheral<PeripheralDelegate>* peripheral;
-@property (nonatomic, strong) id<BlelanDelegate>  delegate;
-@property (nonatomic, strong) NSMutableArray *allDevices;
+@property (nonatomic, strong) CCentral<   CentralDelegate   > * central;
+@property (nonatomic, strong) CPeripheral<PeripheralDelegate> * peripheral;
+@property (nonatomic, strong) id<         BlelanDelegate    > delegate;
 
 @end
 
@@ -29,25 +28,27 @@
 @implementation LightAir
 
 /**
- *  初始化的时候指定LightAir类型，作为外设还是中心
+ *  初始化设备时指定类型，作为外设还是中心
  *
  *  @param type 指定实例类型
+ *
+ *  @param name 指定设备名称
  *
  *  @param delegate 实现BlelanDelegate协议的对象实例
  *
  *  @return LightAir实例
  */
-- (instancetype)initWithType:(LightAirType)type delegate:(id<BlelanDelegate>)delegate
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name delegate:(id<BlelanDelegate>)delegate
 {
     self = [super init];
     if (self) {
         _delegate = delegate;
         if (type == PeripheralType) {
-            _peripheral = [[CPeripheral alloc] initWithName:@"testPeripheral"];
+            _peripheral = [[CPeripheral alloc] initWithName:name];
             isCentral = NO;
             [_peripheral setDelegate:delegate];
         }else{
-            _central = [[CCentral alloc] init];
+            _central = [[CCentral alloc] initWithName:name];
             isCentral = YES;
             [_central setDelegate:delegate];
         }
@@ -55,15 +56,6 @@
     return self;
 }
 
-/**
- *  返回所有设备的名称列表
- *
- *  @return 设备名数组
- */
-- (NSArray *)allDevices
-{
-    return (NSArray*)_allDevices;
-}
 
 /**
  *  启动设备，作为外设，或者中心，如果为外设则开启广播，如果为中心则开始扫描
@@ -90,16 +82,30 @@
 }
 
 /**
+ *  作为外设的时候可以启动游戏
+ */
+- (void)startGame
+{
+    if(!isCentral){
+        [_peripheral startGame];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+    }
+}
+
+/**
  *  发送数据
  *
  *  @param data 准备好发送的数据
- */
-- (void)sendMessageWithData:(NSData *)data
+ *
+ *  param idx 设备在设备列表中的索引，0表示广播。
+*/
+- (void)sendMessageWithData:(NSData *)data to:(int)idx
 {
     if(isCentral){
-        
+        //中心经由外设转发
     }else{
-    
+        //外设本身直接发送
     }
 }
 
@@ -107,12 +113,14 @@
  *  发送字符串
  *
  *  @param string 字符串
+ *
+ *  param idx 设备在设备列表中的索引，0表示广播。
  */
-- (void)sendMessageWithString:(NSString *)string
-{
-    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-    
-    [self sendMessageWithData:data];
-}
+//- (void)sendMessageWithString:(NSString *)string to:(int)idx
+//{
+//    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
+//    
+//    [self sendMessageWithData:data to:idx];
+//}
 
 @end

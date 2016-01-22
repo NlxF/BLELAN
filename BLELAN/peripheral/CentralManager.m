@@ -10,31 +10,73 @@
 
 @interface CentralManager()
 
-@property (nonatomic, strong) NSMutableArray *devicesList;      //所有设备的列表，包括外设和所有中心。
-@property (nonatomic, strong) NSMutableArray *devicesName;   //设备名。
+@property (nonatomic, strong) NSMutableArray *centralName;      //中心设备名。
+@property (nonatomic, strong) NSMutableArray *centralList;      //代表中心设备的CBCentral对象
 
 @end
 
 @implementation CentralManager
 
 #pragma mark - attributes methods
-- (NSMutableArray *)centralList
+- (NSMutableArray *)centralName
 {
-    if (_centralList==nil) {
-        _centralList = [[NSMutableArray alloc] init]
+    if (_centralName == nil) {
+        _centralName = [[NSMutableArray alloc] init];
     }
-    return _centralList
+    return _centralName;
+}
+
+- (NSMutableArray *)centrals
+{
+    if (_centralList == nil) {
+        _centralList = [[NSMutableArray alloc] init];
+    }
+    return _centralList;
 }
 
 #pragma mark - custome methods
-- (void)addCentral:(CBCentral *)central
+- (void)addCentral:(NSString *)centralName device:(CBCentral *)device
 {
-    [self.centralList addObject:central];
+    if (centralName == nil || device == nil)
+        return;
+
+    [self.centralName addObject:centralName];
+    [self.centralList addObject:device];
+    
 }
 
-- (void)removeCentral:(CBCentral *)central
+- (void)removeCentral:(NSString *)centralName or:(CBCentral *)device
 {
-    [self.centralList removeObject:central];
+    NSUInteger idx = -1;
+    
+    if (centralName != nil) {
+        idx = [self.centralName indexOfObject:centralName];
+    }else if(device != nil){
+        idx = [self.centralList indexOfObject:device];
+    }
+    
+    if (idx != -1) {
+        [self.centralName removeObjectAtIndex:idx];
+        [self.centralList removeObjectAtIndex:idx];
+    }
+}
+
+- (NSArray *)currentCentralList
+{
+    return (NSArray *)_centralName;
+}
+
+- (CBCentral *)getCentralByIndex:(NSUInteger)index
+{
+    if (index <= 0)
+        return nil;
+    
+    NSString *deviceName = [self.centralName objectAtIndex:index];
+    if (deviceName == nil) {
+        return nil;
+    }
+    
+    return [self.centralList objectAtIndex:index];
 }
 
 @end

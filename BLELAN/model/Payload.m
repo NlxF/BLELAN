@@ -129,11 +129,6 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
             FrameType tmp = MakeGameFrame;
             retType = tmp;
             *retValue = retData;
-        }else{
-            FrameType tmp = MakeOneToManyFrame;
-            retType = tmp;
-            NSString *retStr = [[NSString alloc] initWithData:retData encoding:NSUTF8StringEncoding];
-            *retValue = retStr;
         }
         memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;

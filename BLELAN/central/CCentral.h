@@ -13,7 +13,7 @@
 
 @interface CCentral : NSObject <CentralDelegate>
 
-- (instancetype)init;
+- (instancetype)initWithName:(NSString*)name;
 
 -(void) scan;
 -(void) cancel;

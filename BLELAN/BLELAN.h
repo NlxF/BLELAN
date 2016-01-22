@@ -20,10 +20,11 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
  *  结果回调，用来接收游戏数据或者聊天内容，串行到达。
  */
 @protocol BlelanDelegate <NSObject>
+
 @optional
 - (void)recvData:(NSData *)data;
 
-- (void)recvMessage:(NSString *)string;
+- (void)deviceList:(NSArray *)list error:(NSError*)error;
 
 @end
 
@@ -31,22 +32,22 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 @interface LightAir : NSObject
 
 /*******************************common*********************************/
-- (instancetype)initWithType:(LightAirType)type delegate:(id<BlelanDelegate>)delegate;
+
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name delegate:(id<BlelanDelegate>)delegate;
 
 - (void)startDevice;
 
 - (void)stopDevice;
 
-- (NSArray *)allDevices;
+//- (NSArray *)allDevices;
 
-- (void)sendMessageWithString:(NSString *)string;
+//- (void)sendMessageWithString:(NSString *)string to:(int)idx;
 
-- (void)sendMessageWithData:(NSData *)data;
+- (void)sendMessageWithData:(NSData *)data to:(int)idx;
 
 /***************************peripheral*********************************/
-- (void)startGame;
 
-- (void)setSuspended:(BOOL)suspended;
+- (void)startGame;
 
 /*******************************central*********************************/
 

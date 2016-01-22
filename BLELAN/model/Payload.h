@@ -19,10 +19,10 @@ typedef struct
 /***帧类型组合***/
 //1.具体业务逻辑
 #define MakeGameFrame          {0x0, 0x0}
-//2.群聊
-#define MakeOneToManyFrame   {0x1, 0x0}
-//3.私聊
-#define MakeOneToOneFrame    {0x1, 0x1}
+////2.群聊
+//#define MakeOneToManyFrame   {0x1, 0x0}
+////3.私聊
+//#define MakeOneToOneFrame    {0x1, 0x1}
 
 /***判断是否结束帧***/
 #define isFinish(arg)    arg&0x80

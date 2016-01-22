@@ -17,7 +17,7 @@
 
 @property (nonatomic, strong) CBPeripheralManager *peripheralMgr;
 @property (nonatomic, strong) CBMutableCharacteristic *broadcastCharacteristic;
-@property (nonatomic, strong) CBMutableCharacteristic *chatCharacteristic;
+@property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
@@ -50,8 +50,8 @@
 - (void)startAdvertising
 {
     [self.peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: _peripheralName,
-                                            CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID], [CBUUID UUIDWithString:SERVICECHATUUID]]
-                                            }];
+                                            CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
+                                            ]}];
     
 }
 
@@ -66,6 +66,38 @@
     _delegate = delegate;
 }
 
+/**
+ *  返回设备列表，包括外设和中心
+ *
+ *  @return 所有设备名数组,包括外设。
+ */
+- (NSArray *)deviceList
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    
+    //设备列表索引从1开始。
+    [arr addObject:[NSNull null]];
+    [arr addObject:_peripheralName];
+    [arr addObjectsFromArray:[self.centralsMgr currentCentralList]];
+
+    return (NSArray*)arr;
+}
+
+- (void)startGame
+{
+    //停止广播
+    [self stopAdvertising];
+    
+    [_delegate deviceList:[self deviceList] error:nil];
+    
+    //将设备列表广播出去
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:[self deviceList]];
+    self.nameCharacteristic.value = data;
+    
+    //发起开始通知
+    [[NSNotificationCenter defaultCenter] postNotificationName:PERIPHERALSTART object:nil];
+}
+
 #pragma mark - Peripheral Manager Delegate Methods
 
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral
@@ -74,34 +106,29 @@
     if (peripheral.state != CBPeripheralManagerStatePoweredOn) {
         return;
     }
-    
+
     //广播频道特性
-    self.broadcastCharacteristic = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
+    self.broadcastCharacteristic       = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
                                                                      properties:CBCharacteristicPropertyNotify
                                                                           value:nil
                                                                     permissions:CBAttributePermissionsReadable];
-    
+
     //广播服务
     CBMutableService *broadcastService = [[CBMutableService alloc] initWithType:[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                                                        primary:YES];
-    
-    //聊天频道特性
-    self.chatCharacteristic = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:CHATCHARACTERUUID]
+
+    //设备名称特性
+    self.nameCharacteristic            = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
                                                                  properties:CBCharacteristicPropertyNotify
                                                                       value:nil
                                                                 permissions:CBAttributePermissionsReadable];
-    //聊天服务
-    CBMutableService *chatService = [[CBMutableService alloc] initWithType:[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
-                                                                   primary:YES];
-    
+
     //特性添加到服务
-    broadcastService.characteristics = @[self.broadcastCharacteristic];
-    chatService.characteristics = @[self.chatCharacteristic];
-    
+    broadcastService.characteristics   = @[self.broadcastCharacteristic, self.nameCharacteristic];
+
     //发布服务和特性
     [self.peripheralMgr addService:broadcastService];
-    [self.peripheralMgr addService:chatService];
-    
+
     NSLog(@"发布服务");
 }
 
@@ -111,18 +138,22 @@
     if (error)
     {
         ALERT(@"服务发布失败", [error localizedDescription]);
+        return;
     }
+    
+    NSLog(@"发布服务");
 }
 
 //开始广播的回调
 - (void)peripheralManagerDidStartAdvertising:(CBPeripheralManager *)peripheral error:(NSError *)error
 {
-    NSLog(@"Start Advertising");
-    
     if (error)
     {
         ALERT(@"广播失败", [error localizedDescription]);
+        return;
     }
+    
+    NSLog(@"开始广播");
 }
 
 //接收到中心端读取特性的请求, (发送数据)
@@ -135,22 +166,34 @@
 //接收到中心端写特性的请求，(接收数据)
 - (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveWriteRequests:(NSArray<CBATTRequest *> *)requests
 {
-    [self.peripheralMgr respondToRequest:requests[0] withResult:CBATTErrorSuccess];
+    for (CBATTRequest*request in requests) {
+        if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
+            //收到中心发来的设备名
+            NSString *deviceName = [[NSString alloc] initWithData:request.characteristic.value encoding:NSUTF8StringEncoding];
+            
+            //将设备名存储到中心管理器
+            [self.centralsMgr addCentral:deviceName device:request.central];
+            
+        }else{
+            //具体业务逻辑数据
+            [self.peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
+        }
+    }
 }
 
 
-/** Catch when someone subscribes to our characteristic
+/** 中心订阅外设特性的回调
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didSubscribeToCharacteristic:(CBCharacteristic *)characteristic
 {
     NSLog(@"Central subscribed to characteristic,%lu", (unsigned long)central.maximumUpdateValueLength);
     
     //将订阅特性的中心存储到中心管理器
-    [self.centralsMgr addCentral:central];
+    //[self.centralsMgr addCentral:central];
     
-    _chatCharacteristic = characteristic;
-    NSData *updatedData = characteristic.value;
-    [self.peripheralMgr updateValue:updatedData forCharacteristic:(CBMutableCharacteristic*)characteristic onSubscribedCentrals:nil];
+    //_chatCharacteristic = characteristic;
+//    NSData *updatedData = characteristic.value;
+//    [self.peripheralMgr updateValue:updatedData forCharacteristic:(CBMutableCharacteristic*)characteristic onSubscribedCentrals:nil];
 }
 
 /*
@@ -161,7 +204,7 @@
     NSLog(@"Central unsubscribed from characteristic");
     
     //将中心从中心管理器移除
-    [self.centralsMgr removeCentral:central];
+    [self.centralsMgr removeCentral:nil or:central];
 }
 
 /*
@@ -170,7 +213,7 @@
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
     
-    [self.peripheralMgr updateValue:_chatCharacteristic.value forCharacteristic:_chatCharacteristic onSubscribedCentrals:nil];
+    //[self.peripheralMgr updateValue:_chatCharacteristic.value forCharacteristic:_chatCharacteristic onSubscribedCentrals:nil];
 }
 
 

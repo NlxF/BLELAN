@@ -26,6 +26,12 @@ typedef unsigned char                   UInt8;
 /*发起蓝牙连接通知时传递给接收者的userinfo的key*/
 #define NOTIFICATIONKEY           @"IDX"
 
+/*外设开始通知*/
+#define PERIPHERALSTART           @"peripheralStart"
+/*中心开始通知*/
+#define CENTRALSTART              @"centralStart"
+
+
 /*表示信号强弱的图名*/
 #define  SIGNALHIGH                   @"high.png"
 #define  SIGNALMID                     @"middle.png"
@@ -36,13 +42,16 @@ typedef unsigned char                   UInt8;
 #define   SERVICEBROADCASTUUID                @"17193E0C-1D26-4771-8422-6E00D9257FAC"
 //广播频道服务的特性的UUID
 #define   BROADCASTCHARACTERUUID          @"F967DF0B-88A0-4E55-9EDA-E2C6DC6CE886"
+//设备名特性的UUID
+#define   BROADCASTNAMECHARACTERUUID      @"5558878B-FF99-49FC-87F1-6ED86678D218"
 
-//聊天频道服务的UUID
-#define   SERVICECHATUUID                          @"F5F389F7-6372-4459-9575-FEE90F571195"
-//聊天频道服务的特性的UUID
-#define  CHATCHARACTERUUID                      @"DC2D2BC7-8C98-4346-BD92-E6D98D9AF1B0"
-//设备名称特性的UUID
-#define  NAMECHARACTERUUID                      @"015B566C-A57F-4FEF-8178-C69B75FEB439"
+
+////聊天频道服务的UUID
+//#define   SERVICECHATUUID                          @"F5F389F7-6372-4459-9575-FEE90F571195"
+////聊天频道服务的特性的UUID
+//#define  CHATCHARACTERUUID                      @"DC2D2BC7-8C98-4346-BD92-E6D98D9AF1B0"
+////设备名称特性的UUID
+//#define  NAMECHARACTERUUID                      @"015B566C-A57F-4FEF-8178-C69B75FEB439"
 /***********************************************************************************************/
 
 /***************************数据帧******************************/

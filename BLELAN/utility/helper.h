@@ -20,7 +20,7 @@
  */
 @protocol commDelegate <NSObject>
 
-- (void)send:(NSData*)data type:(int)type;
+- (void)sendData:(NSData*)data;
 
 
 @end

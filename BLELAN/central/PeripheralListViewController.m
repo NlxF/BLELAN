@@ -13,27 +13,19 @@
 
 @interface PeripheralListViewController ()
 
-@property (nonatomic, strong) NSArray   *allPeripherals;
-@property (nonatomic, strong) UITableView  *myTableView;
+@property (nonatomic, strong) NSMutableArray   *peripheralsList;
+@property (nonatomic, strong) UITableView        *peripheralTableView;
 
 @end
 
 @implementation PeripheralListViewController
-
-- (instancetype)initWithPeripheralList:(NSArray *)peripheralList
-{
-    if (self = [super init]) {
-        _allPeripherals = peripheralList;
-    }
-    return self;
-}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     
     //获取当前设备的状态
     CGRect rect = [Helper getCurrentDeviceRect];
-    _myTableView = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
+    _peripheralTableView = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -43,10 +35,15 @@
 
 #pragma mark - custom methods
 
-- (void)UpdatePeripheralList:(NSArray *)peripheralList
+- (void)UpdatePeripheralList:(NSValue *)peripheralValue
 {
-    _allPeripherals = peripheralList;
-    [_myTableView reloadData];
+    [self.peripheralsList addObject:peripheralValue];
+    
+    [self.peripheralTableView beginUpdates];
+    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
+    [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
+    [self.peripheralTableView endUpdates];
+    
 }
 
 
@@ -57,7 +54,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [_allPeripherals count];
+    return [self.peripheralsList count];
 }
 
 
@@ -70,11 +67,11 @@
     }
     
     showData data;
-    NSValue *value = [_allPeripherals objectAtIndex:indexPath.row];
+    NSValue *value = [self.peripheralsList objectAtIndex:indexPath.row];
     [value getValue:&data];
     
     cell.textLabel.text = [NSString stringWithUTF8String:data.name];
-    cell.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
+    //cell.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
     
     return cell;
 }
@@ -93,40 +90,6 @@
                                                                               userInfo:@{NOTIFICATIONKEY: indexPath}];
     NSLog(@"发起蓝牙连接通知");
 }
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
-}
-*/
-
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
-}
-*/
-
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-}
-*/
-
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
 
 /*
 #pragma mark - Navigation

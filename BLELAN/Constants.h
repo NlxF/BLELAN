@@ -15,8 +15,11 @@ typedef unsigned char                   UInt8;
 /*列表刷新频率*/
 #define REFRESHRATE                 0.5
 
-/*tableview cell 标识*/
-#define REUSEIDENTIFIER           @"reuseIdentifier"
+/*peripheral tableview cell 标识*/
+#define REUSEIDENTIFIER              @"reuseIdentifier"
+
+/*central tableview cell 标识*/
+#define CENTRALREUSEIDENTIFIER @"centralReuseIdentifier"
 
 /*蓝牙连接时的通知*/
 #define CONNECTNOTF               @"connectNotify"
@@ -44,7 +47,8 @@ typedef unsigned char                   UInt8;
 #define   BROADCASTCHARACTERUUID          @"F967DF0B-88A0-4E55-9EDA-E2C6DC6CE886"
 //设备名特性的UUID
 #define   BROADCASTNAMECHARACTERUUID      @"5558878B-FF99-49FC-87F1-6ED86678D218"
-
+//调度特性UUID
+#define   BROADCASESCHEDULEUUID             @"61A6F8E2-0D76-4837-9A6B-8F5A16E73412"
 
 ////聊天频道服务的UUID
 //#define   SERVICECHATUUID                          @"F5F389F7-6372-4459-9575-FEE90F571195"

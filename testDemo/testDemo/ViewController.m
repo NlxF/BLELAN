@@ -7,8 +7,9 @@
 //
 
 #import "ViewController.h"
+#import <BLELAN/BLELAN.h>
 
-@interface ViewController ()
+@interface ViewController () <BlelanDelegate>
 
 @end
 
@@ -17,11 +18,17 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    
+    LightAir *ligjtair;
+    ligjtair = [[LightAir alloc] initWithType:PeripheralType name:@"ROM1" mode:YES];
+    [ligjtair startDevice];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
+
 
 @end

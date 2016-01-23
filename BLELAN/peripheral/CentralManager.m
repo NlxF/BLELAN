@@ -11,7 +11,7 @@
 @interface CentralManager()
 
 @property (nonatomic, strong) NSMutableArray *centralName;      //中心设备名。
-@property (nonatomic, strong) NSMutableArray *centralList;      //代表中心设备的CBCentral对象
+@property (nonatomic, strong) NSMutableArray *centralList;        //代表中心设备的CBCentral对象
 
 @end
 
@@ -35,7 +35,7 @@
 }
 
 #pragma mark - custome methods
-- (void)addCentral:(NSString *)centralName device:(CBCentral *)device
+- (void)addCentral:(CBCentral *)device name:(NSString *)centralName
 {
     if (centralName == nil || device == nil)
         return;
@@ -45,7 +45,7 @@
     
 }
 
-- (void)removeCentral:(NSString *)centralName or:(CBCentral *)device
+- (void)removeCentral:(CBCentral *)device orName:(NSString *)centralName
 {
     NSUInteger idx = -1;
     
@@ -61,9 +61,14 @@
     }
 }
 
-- (NSArray *)currentCentralList
+- (NSArray *)centralsNameList
 {
     return (NSArray *)_centralName;
+}
+
+- (NSArray *)currentCentrals
+{
+    return (NSArray *)_centralList;
 }
 
 - (CBCentral *)getCentralByIndex:(NSUInteger)index

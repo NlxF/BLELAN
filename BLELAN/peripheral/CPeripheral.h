@@ -11,7 +11,7 @@
 
 @interface CPeripheral : NSObject <PeripheralDelegate>
 
-- (instancetype)initWithName:(NSString*)name;
+- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
 - (void)startAdvertising;
 
@@ -22,5 +22,9 @@
 - (NSArray *)deviceList;
 
 - (void)startGame;
+
+- (void)forwardMessage:(NSData *)mesage;
+
+- (void)sendData:(NSData *)data;
 
 @end

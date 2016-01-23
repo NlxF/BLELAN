@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "BLELAN.h"
+#import "Blelan.h"
 #import "central/CCentral.h"
 #import "peripheral/CPeripheral.h"
 #import "helper.h"
@@ -18,9 +18,9 @@
     BOOL  isCentral;
 }
 
-@property (nonatomic, strong) CCentral<   CentralDelegate   > * central;
-@property (nonatomic, strong) CPeripheral<PeripheralDelegate> * peripheral;
-@property (nonatomic, strong) id<         BlelanDelegate    > delegate;
+@property (nonatomic, strong) CCentral<CentralDelegate>            *central;
+@property (nonatomic, strong) CPeripheral<PeripheralDelegate>    *peripheral;
+@property (nonatomic, strong) id<BlelanDelegate>                        delegate;
 
 @end
 
@@ -34,31 +34,39 @@
  *
  *  @param name 指定设备名称
  *
- *  @param delegate 实现BlelanDelegate协议的对象实例
+ *  @param isStrategy 游戏类型，竞技或策略。
  *
  *  @return LightAir实例
  */
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name delegate:(id<BlelanDelegate>)delegate
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name mode:(BOOL)isStrategy
 {
     self = [super init];
     if (self) {
-        _delegate = delegate;
         if (type == PeripheralType) {
-            _peripheral = [[CPeripheral alloc] initWithName:name];
+            _peripheral = [[CPeripheral alloc] initWithName:name mode:isStrategy];
             isCentral = NO;
-            [_peripheral setDelegate:delegate];
         }else{
-            _central = [[CCentral alloc] initWithName:name];
+            _central = [[CCentral alloc] initWithName:name mode:isStrategy];
             isCentral = YES;
-            [_central setDelegate:delegate];
         }
     }
     return self;
 }
 
+- (void)setDelegate:(id<BlelanDelegate>)delegate
+{
+    _delegate = delegate;
+    if (isCentral) {
+        [_central setDelegate:delegate];
+    }else{
+        [_peripheral setDelegate:delegate];
+    }
+}
 
 /**
  *  启动设备，作为外设，或者中心，如果为外设则开启广播，如果为中心则开始扫描
+ *
+ *  @param mode 通讯类型
  */
 - (void)startDevice
 {
@@ -98,29 +106,16 @@
  *
  *  @param data 准备好发送的数据
  *
- *  param idx 设备在设备列表中的索引，0表示广播。
 */
-- (void)sendMessageWithData:(NSData *)data to:(int)idx
+- (void)sendMessageWithData:(NSData *)data
 {
     if(isCentral){
         //中心经由外设转发
+        [_central sendData:data];
     }else{
         //外设本身直接发送
+        [_peripheral sendData:data];
     }
 }
-
-/**
- *  发送字符串
- *
- *  @param string 字符串
- *
- *  param idx 设备在设备列表中的索引，0表示广播。
- */
-//- (void)sendMessageWithString:(NSString *)string to:(int)idx
-//{
-//    NSData *data = [string dataUsingEncoding:NSUTF8StringEncoding];
-//    
-//    [self sendMessageWithData:data to:idx];
-//}
 
 @end

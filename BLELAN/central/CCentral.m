@@ -15,22 +15,26 @@
 #import "PeripheralListViewController.h"
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
+{
+    NSUInteger currentPlayer;
+    NSUInteger selfIndex;
+}
 
-@property (strong, nonatomic) id<BlelanDelegate>           delegate;
+@property (strong, nonatomic) id<BlelanDelegate              > delegate;
 @property (strong, nonatomic) CBCentralManager             *centralMgr;
 @property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
-@property (strong, nonatomic) NSOperationQueue             *queue;
-@property (strong, nonatomic) NSInvocationOperation        *blockOp;
+@property (strong, nonatomic) CBCharacteristic           *gameCharacteristic;
 @property (strong, nonatomic) NSMutableArray               *allPeripherals;
 @property (strong, nonatomic) PeripheralListViewController *listView;
-@property (strong, nonatomic) NSString                     *deciveName;
+@property (strong, nonatomic) NSString                     *centralName;
+@property (nonatomic, assign) BOOL                         isStrategy;
+
 @end
 
 @implementation CCentral
 
 #pragma mark - CCentral methods
-
-- (instancetype)initWithName:(NSString*)name;
+- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy
 {
     self = [super init];
     if (self) {
@@ -39,11 +43,14 @@
                                                            queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
                                                          options:@{CBCentralManagerOptionRestoreIdentifierKey:@1}];
         
-        //store all peripherals;
+        //外设列表;
         _allPeripherals = [[NSMutableArray alloc] init];
         
-        //device name
-        _deciveName = name;
+        //中心名，用于在外设显示
+        _centralName = name;
+        
+        //模式
+        _isStrategy = isStrategy;
     }
     return self;
 }
@@ -53,9 +60,6 @@
     _delegate = delegate;
 }
 
-/*
- * task of scan
- */
 - (void)performScanning
 {
     [self.centralMgr scanForPeripheralsWithServices:nil
@@ -67,15 +71,6 @@
  */
 - (void)scan
 {
-//    if (_blockOp == nil) {
-//        _blockOp = [[NSInvocationOperation alloc] initWithTarget:self selector:@selector(performScanning) object:nil];
-//    }
-//    if (_queue == nil) {
-//        _queue = [[NSOperationQueue alloc] init];
-//    }
-//    
-//    [_queue addOperation:_blockOp];
-
     [self performScanning];
     
     NSLog(@"Scanning started");
@@ -96,9 +91,9 @@
  */
 - (void)cancel
 {
-    [_queue cancelAllOperations];
     //清空外设列表
     _allPeripherals = nil;
+    
     //停止扫描
     if (self.centralMgr.isScanning) {
         [self.centralMgr stopScan];
@@ -107,22 +102,19 @@
     [_listView dismissModalViewControllerAnimated:YES];
 }
 
-///*
-// * 暂停扫描
-// */
-//- (void)stop
-//{
-//    [_queue setSuspended:YES];
-//}
-//
-///*
-// * 继续扫描
-// */
-//- (void)resume
-//{
-//    [_queue setSuspended:NO];
-//}
-
+- (void)sendData:(NSData *)message
+{
+    if ((_isStrategy && currentPlayer == selfIndex) || !_isStrategy) {
+        //轮到自己出牌,或者竞技类不需要调度
+        FrameType gameType = MakeGameFrame;
+        for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:message dst:1 src:selfIndex type:gameType]) {
+            [_currentPeripheral writeValue:value forCharacteristic:self.gameCharacteristic type:CBCharacteristicWriteWithResponse];
+        }
+    }else{
+        //还没轮到自己出牌
+        ALERT(@"错误", @"还没轮到你出");
+    }
+}
 
 - (void)connect:(NSNotification*)notification
 {
@@ -181,19 +173,10 @@
     strcpy(data.name, [peripheral.name cStringUsingEncoding:NSUTF8StringEncoding]);
     data.percentage = RSSI.integerValue / 22.0;
     NSValue *dataValue = [NSValue valueWithBytes:&data objCType:@encode(showData)];
-    [_allPeripherals addObject:dataValue];
-    NSArray *sotredList = [_allPeripherals sortedArrayUsingComparator:^NSComparisonResult(NSValue *left, NSValue *right){
-                                    showData dataL;
-                                    showData dataR;
-                                    [left getValue:&dataL];
-                                    [right getValue:&dataR];
-                                    if (dataL.percentage > dataR.percentage)
-                                        return NSOrderedDescending;
-                                    else
-                                        return NSOrderedAscending;
-                                }];
+    [_allPeripherals addObject:peripheral];
+    
     //更新外设列表
-    [_listView UpdatePeripheralList:sotredList];
+    [_listView UpdatePeripheralList:dataValue];
 }
 
 /*
@@ -218,7 +201,6 @@
     
     //只搜索匹配UUID的服务
     [peripheral discoverServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]];
-    
 }
 
 /*
@@ -274,11 +256,20 @@
     
     for (CBCharacteristic *character in service.characteristics) {
         if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
-            //发现设备名称特性
-            NSData *centralName = [_deciveName dataUsingEncoding:NSUTF8StringEncoding];
+            //设备名称特性
+            NSData *centralName = [_centralName dataUsingEncoding:NSUTF8StringEncoding];
             [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithoutResponse];
             //订阅，等待游戏开始后设备列表更新
             [peripheral setNotifyValue:YES forCharacteristic:character];
+        }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
+            //调度特性
+            if(_isStrategy){
+                //策略游戏需要订阅调度特性，来获取出牌顺序
+                [peripheral setNotifyValue:YES forCharacteristic:character];
+            }
+        }else{
+            //游戏特性
+            self.gameCharacteristic = character;
         }
     }
     //接下来等待数据到来
@@ -296,9 +287,23 @@
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
         NSArray *deviceList = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
+        selfIndex = [deviceList indexOfObject:_centralName];
         [_delegate deviceList:deviceList error:nil];
         //发起开始通知
         [[NSNotificationCenter defaultCenter] postNotificationName:CENTRALSTART object:nil];
+        //获取列表后取消订阅
+        [peripheral setNotifyValue:NO forCharacteristic:characteristic];
+        //房主先出牌
+        currentPlayer = 1;
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
+        //更新调度
+        NSData *value = characteristic.value;
+        int idx;
+        [value getBytes:&idx length:sizeof(idx)];
+        //更新当前出牌对象
+        currentPlayer = idx;
+        //更新调度
+        [_delegate UpdateScheduleIndex:idx];
     }else{
         //接收外设数据
         NSData *data = characteristic.value;

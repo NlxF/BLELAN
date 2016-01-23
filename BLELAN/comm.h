@@ -17,3 +17,12 @@ typedef enum
     PeripheralType = 0,
     CentralType = 1,
 }LightAirType;
+
+/**
+ 类型，策略还是竞技
+ */
+typedef enum
+{
+    STRATEGY = 0,
+    ATHLETICS = 1,
+} DeviceMode;

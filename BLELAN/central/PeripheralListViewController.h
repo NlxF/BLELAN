@@ -10,10 +10,7 @@
 
 @interface PeripheralListViewController : UITableViewController
 
-/**外设列表初始化 table view**/
-- (instancetype)initWithPeripheralList:(NSArray *)peripheralList;
-
 /**更新 table view**/
-- (void)UpdatePeripheralList:(NSArray *)peripheralList;
+- (void)UpdatePeripheralList:(NSValue *)peripheralName;
 
 @end

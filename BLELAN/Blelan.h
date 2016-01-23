@@ -26,6 +26,8 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)deviceList:(NSArray *)list error:(NSError*)error;
 
+- (void)UpdateScheduleIndex:(NSUInteger)idx;
+
 @end
 
 
@@ -33,22 +35,21 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 /*******************************common*********************************/
 
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name delegate:(id<BlelanDelegate>)delegate;
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name mode:(BOOL)isStrategy;
 
 - (void)startDevice;
 
 - (void)stopDevice;
 
-//- (NSArray *)allDevices;
-
-//- (void)sendMessageWithString:(NSString *)string to:(int)idx;
-
-- (void)sendMessageWithData:(NSData *)data to:(int)idx;
+- (void)sendMessageWithData:(NSData *)data;
 
 /***************************peripheral*********************************/
 
 - (void)startGame;
 
+- (void)stopGame;
+
 /*******************************central*********************************/
 
+- (void)quitGame;
 @end

@@ -13,13 +13,12 @@
 
 @interface CCentral : NSObject <CentralDelegate>
 
-- (instancetype)initWithName:(NSString*)name;
+- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
 -(void) scan;
 -(void) cancel;
 -(void) connect:(NSNotification*)notification;
-
-
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
+- (void)sendData:(NSData *)message;
 
 @end

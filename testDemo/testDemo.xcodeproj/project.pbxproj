@@ -15,16 +15,6 @@
 		57A6E3A21C48E80600902F01 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A6E3A01C48E80600902F01 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		57A6E3AD1C48E81B00902F01 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 57A6E3A91C48E81B00902F01 /* BLELAN.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 57A6E37B1C48E7DA00902F01;
-			remoteInfo = BLELAN;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		57A6E38F1C48E80600902F01 /* testDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = testDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		57A6E3931C48E80600902F01 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -36,7 +26,7 @@
 		57A6E39E1C48E80600902F01 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		57A6E3A11C48E80600902F01 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		57A6E3A31C48E80600902F01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		57A6E3A91C48E81B00902F01 /* BLELAN.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = BLELAN.xcodeproj; path = ../BLELAN.xcodeproj; sourceTree = "<group>"; };
+		7A2045901C53B38300E74435 /* BLELAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BLELAN.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,9 +43,9 @@
 		57A6E3861C48E80600902F01 = {
 			isa = PBXGroup;
 			children = (
-				57A6E3A91C48E81B00902F01 /* BLELAN.xcodeproj */,
 				57A6E3911C48E80600902F01 /* testDemo */,
 				57A6E3901C48E80600902F01 /* Products */,
+				7A2045921C53B38B00E74435 /* Framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -91,12 +81,12 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		57A6E3AA1C48E81B00902F01 /* Products */ = {
+		7A2045921C53B38B00E74435 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
-				57A6E3AE1C48E81B00902F01 /* BLELAN.framework */,
+				7A2045901C53B38300E74435 /* BLELAN.framework */,
 			);
-			name = Products;
+			name = Framework;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -145,28 +135,12 @@
 			mainGroup = 57A6E3861C48E80600902F01;
 			productRefGroup = 57A6E3901C48E80600902F01 /* Products */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 57A6E3AA1C48E81B00902F01 /* Products */;
-					ProjectRef = 57A6E3A91C48E81B00902F01 /* BLELAN.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
 				57A6E38E1C48E80600902F01 /* testDemo */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXReferenceProxy section */
-		57A6E3AE1C48E81B00902F01 /* BLELAN.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = BLELAN.framework;
-			remoteRef = 57A6E3AD1C48E81B00902F01 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		57A6E38D1C48E80600902F01 /* Resources */ = {
@@ -300,7 +274,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = testDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.archermind.testDemo;
@@ -312,7 +291,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = testDemo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.archermind.testDemo;

@@ -13,7 +13,33 @@
 		57A6E39D1C48E80600902F01 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A6E39B1C48E80600902F01 /* Main.storyboard */; };
 		57A6E39F1C48E80600902F01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 57A6E39E1C48E80600902F01 /* Assets.xcassets */; };
 		57A6E3A21C48E80600902F01 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 57A6E3A01C48E80600902F01 /* LaunchScreen.storyboard */; };
+		7A2045AD1C53C1AE00E74435 /* Blelan.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A2045A71C53C0DC00E74435 /* Blelan.framework */; };
+		7A2045AE1C53C1AE00E74435 /* Blelan.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7A2045A71C53C0DC00E74435 /* Blelan.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7A2045A31C53C08100E74435 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7A20459F1C53C08100E74435 /* Blelan.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 57A6E37B1C48E7DA00902F01;
+			remoteInfo = BLELAN;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7A2045AF1C53C1AE00E74435 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				7A2045AE1C53C1AE00E74435 /* Blelan.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		57A6E38F1C48E80600902F01 /* testDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = testDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -26,7 +52,8 @@
 		57A6E39E1C48E80600902F01 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		57A6E3A11C48E80600902F01 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		57A6E3A31C48E80600902F01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		7A2045901C53B38300E74435 /* BLELAN.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BLELAN.framework; sourceTree = "<group>"; };
+		7A20459F1C53C08100E74435 /* Blelan.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Blelan.xcodeproj; path = ../Blelan.xcodeproj; sourceTree = "<group>"; };
+		7A2045A71C53C0DC00E74435 /* Blelan.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Blelan.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -34,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A2045AD1C53C1AE00E74435 /* Blelan.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -43,6 +71,7 @@
 		57A6E3861C48E80600902F01 = {
 			isa = PBXGroup;
 			children = (
+				7A20459F1C53C08100E74435 /* Blelan.xcodeproj */,
 				57A6E3911C48E80600902F01 /* testDemo */,
 				57A6E3901C48E80600902F01 /* Products */,
 				7A2045921C53B38B00E74435 /* Framework */,
@@ -84,9 +113,17 @@
 		7A2045921C53B38B00E74435 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
-				7A2045901C53B38300E74435 /* BLELAN.framework */,
+				7A2045A71C53C0DC00E74435 /* Blelan.framework */,
 			);
 			name = Framework;
+			sourceTree = "<group>";
+		};
+		7A2045A01C53C08100E74435 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7A2045A41C53C08100E74435 /* Blelan.framework */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +136,7 @@
 				57A6E38B1C48E80600902F01 /* Sources */,
 				57A6E38C1C48E80600902F01 /* Frameworks */,
 				57A6E38D1C48E80600902F01 /* Resources */,
+				7A2045AF1C53C1AE00E74435 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -135,12 +173,28 @@
 			mainGroup = 57A6E3861C48E80600902F01;
 			productRefGroup = 57A6E3901C48E80600902F01 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 7A2045A01C53C08100E74435 /* Products */;
+					ProjectRef = 7A20459F1C53C08100E74435 /* Blelan.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				57A6E38E1C48E80600902F01 /* testDemo */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		7A2045A41C53C08100E74435 /* Blelan.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Blelan.framework;
+			remoteRef = 7A2045A31C53C08100E74435 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		57A6E38D1C48E80600902F01 /* Resources */ = {

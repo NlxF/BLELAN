@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface CentralListViewController : UITableViewController
+@interface CentralListViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
 
 - (void)UpdateCentralList:(NSString *)name;
 

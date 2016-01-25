@@ -13,7 +13,7 @@
 
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
-- (void)startAdvertising;
+//- (void)startAdvertising;
 
 - (void)stopAdvertising;
 

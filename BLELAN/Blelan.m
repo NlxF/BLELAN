@@ -7,10 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "helper.h"
 #import "Blelan.h"
 #import "central/CCentral.h"
 #import "peripheral/CPeripheral.h"
-#import "helper.h"
 
 
 @interface LightAir()
@@ -73,7 +73,7 @@
     if(isCentral){
         [_central scan];
     }else{
-        [_peripheral startAdvertising];
+        //[_peripheral startAdvertising];
     }
 }
 

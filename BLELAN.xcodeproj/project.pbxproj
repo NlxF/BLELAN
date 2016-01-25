@@ -33,7 +33,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		57A6E37B1C48E7DA00902F01 /* BLELAN.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = BLELAN.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		57A6E37B1C48E7DA00902F01 /* Blelan.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Blelan.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		57A6E37E1C48E7DA00902F01 /* Blelan.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Blelan.h; sourceTree = "<group>"; };
 		57A6E3801C48E7DA00902F01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		57CEABA41C4E23E10064B3AB /* Blelan.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Blelan.m; sourceTree = "<group>"; };
@@ -93,7 +93,7 @@
 		57A6E37C1C48E7DA00902F01 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				57A6E37B1C48E7DA00902F01 /* BLELAN.framework */,
+				57A6E37B1C48E7DA00902F01 /* Blelan.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -213,7 +213,7 @@
 			);
 			name = BLELAN;
 			productName = BLELAN;
-			productReference = 57A6E37B1C48E7DA00902F01 /* BLELAN.framework */;
+			productReference = 57A6E37B1C48E7DA00902F01 /* Blelan.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -231,7 +231,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 57A6E3751C48E7DA00902F01 /* Build configuration list for PBXProject "BLELAN" */;
+			buildConfigurationList = 57A6E3751C48E7DA00902F01 /* Build configuration list for PBXProject "Blelan" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -380,7 +380,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.archermind.BLELAN;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Blelan;
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -398,7 +398,7 @@
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.archermind.BLELAN;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Blelan;
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -406,7 +406,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		57A6E3751C48E7DA00902F01 /* Build configuration list for PBXProject "BLELAN" */ = {
+		57A6E3751C48E7DA00902F01 /* Build configuration list for PBXProject "Blelan" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				57A6E3811C48E7DA00902F01 /* Debug */,

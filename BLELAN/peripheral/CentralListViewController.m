@@ -14,6 +14,7 @@
 @interface CentralListViewController ()
 
 @property (nonatomic, strong) NSMutableArray *centralList;
+@property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) UITableView  *myCentralTable;
 @end
 
@@ -24,6 +25,8 @@
     
     //获取当前设备的状态
     CGRect rect = [Helper getCurrentDeviceRect];
+    self.containerView = [[UIView alloc] initWithFrame:rect];
+    
     _myCentralTable = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
 }
 

@@ -7,10 +7,11 @@
 //
 
 #import "ViewController.h"
-#import <BLELAN/BLELAN.h>
+#import <Blelan/Blelan.h>
 
 @interface ViewController () <BlelanDelegate>
 
+@property (nonatomic, strong) LightAir *ligjtair;
 @end
 
 @implementation ViewController
@@ -19,9 +20,9 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
-    LightAir *ligjtair;
-    ligjtair = [[LightAir alloc] initWithType:PeripheralType name:@"ROM1" mode:YES];
-    [ligjtair startDevice];
+    _ligjtair = [[LightAir alloc] initWithType:PeripheralType name:@"ROM1" mode:YES];
+    [_ligjtair startDevice];
+    
 }
 
 - (void)didReceiveMemoryWarning {

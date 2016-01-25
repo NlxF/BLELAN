@@ -14,8 +14,8 @@
 
 + (CGRect)getCurrentDeviceRect
 {
-    CGRect rect;
-    
+    CGRect rect = [[UIScreen mainScreen] bounds];
+
     return rect;
 }
 

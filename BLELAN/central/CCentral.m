@@ -41,7 +41,7 @@
         //start up the CBCentralManager
         _centralMgr = [[CBCentralManager alloc] initWithDelegate:self
                                                            queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-                                                         options:@{CBCentralManagerOptionRestoreIdentifierKey:@1}];
+                                                         options:@{CBCentralManagerOptionRestoreIdentifierKey:[NSNumber numberWithBool:YES]}];
         
         //外设列表;
         _allPeripherals = [[NSMutableArray alloc] init];
@@ -62,7 +62,7 @@
 
 - (void)performScanning
 {
-    [self.centralMgr scanForPeripheralsWithServices:nil
+    [_centralMgr scanForPeripheralsWithServices:nil
                                             options:@{ CBCentralManagerScanOptionAllowDuplicatesKey : @0 }];
 }
 
@@ -95,8 +95,8 @@
     _allPeripherals = nil;
     
     //停止扫描
-    if (self.centralMgr.isScanning) {
-        [self.centralMgr stopScan];
+    if (_centralMgr.isScanning) {
+        [_centralMgr stopScan];
     }
     
     [_listView dismissModalViewControllerAnimated:YES];
@@ -108,7 +108,7 @@
         //轮到自己出牌,或者竞技类不需要调度
         FrameType gameType = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:message dst:1 src:selfIndex type:gameType]) {
-            [_currentPeripheral writeValue:value forCharacteristic:self.gameCharacteristic type:CBCharacteristicWriteWithResponse];
+            [_currentPeripheral writeValue:value forCharacteristic:_gameCharacteristic type:CBCharacteristicWriteWithResponse];
         }
     }else{
         //还没轮到自己出牌
@@ -122,7 +122,7 @@
     NSIndexPath *indexPath = [userinfo objectForKey:NOTIFICATIONKEY];
     
     _currentPeripheral = [_allPeripherals objectAtIndex:indexPath.row];
-    [self.centralMgr connectPeripheral:_currentPeripheral options:nil];
+    [_centralMgr connectPeripheral:_currentPeripheral options:nil];
     
     NSLog(@"Connecting to peripheral %@", _currentPeripheral);
 }
@@ -134,19 +134,19 @@
 - (void)cleanup
 {
     // See if we are subscribed to a characteristic on the peripheral
-    if (self.currentPeripheral.services != nil) {
-        for (CBService *service in self.currentPeripheral.services) {
+    if (_currentPeripheral.services != nil) {
+        for (CBService *service in _currentPeripheral.services) {
             if (service.characteristics != nil) {
                 for (CBCharacteristic *characteristic in service.characteristics) {
                     if (characteristic.isNotifying) {
                         // It is notifying, so unsubscribe
-                        [self.currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
+                        [_currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
                     }
                 }
             }
         }
     }// If we've got this far, we're connected, but we're not subscribed, so we just disconnect
-    [self.centralMgr cancelPeripheralConnection:self.currentPeripheral];
+    [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     
     //移除连接事件
     [[NSNotificationCenter defaultCenter] removeObserver:self name:CONNECTNOTF object:nil];
@@ -209,7 +209,7 @@
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
     NSLog(@"Peripheral Disconnected");
-    self.currentPeripheral = nil;
+    _currentPeripheral = nil;
     
     //蓝牙断开通知
     [[NSNotificationCenter defaultCenter] postNotificationName:DISCONNECTNOTF object:nil];
@@ -269,7 +269,7 @@
             }
         }else{
             //游戏特性
-            self.gameCharacteristic = character;
+            _gameCharacteristic = character;
         }
     }
     //接下来等待数据到来
@@ -331,7 +331,7 @@
     else {
         // so disconnect from the peripheral
         NSLog(@"Notification stopped on %@.  Disconnecting", characteristic);
-        [self.centralMgr cancelPeripheralConnection:peripheral];
+        [_centralMgr cancelPeripheralConnection:peripheral];
     }
 }
 

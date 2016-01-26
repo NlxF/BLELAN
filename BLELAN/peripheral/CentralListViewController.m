@@ -14,8 +14,8 @@
 @interface CentralListViewController ()
 
 @property (nonatomic, strong) NSMutableArray *centralList;
-@property (nonatomic, strong) UIView *containerView;
 @property (nonatomic, strong) UITableView  *myCentralTable;
+
 @end
 
 @implementation CentralListViewController
@@ -25,9 +25,19 @@
     
     //获取当前设备的状态
     CGRect rect = [Helper getCurrentDeviceRect];
-    self.containerView = [[UIView alloc] initWithFrame:rect];
+    self.view.frame = rect;
+    //self.view.opaque = YES;
+    self.view.alpha = 0.1;
+    self.view.backgroundColor = [UIColor whiteColor];
     
+    //rect.size.width *= 0.43;
+    //rect.size.height -= 50;
     _myCentralTable = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
+    [_myCentralTable setDelegate:self];
+    [_myCentralTable setDataSource:self];
+    [self.view addSubview:_myCentralTable];
+    
+    [self ConstraintView];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -44,6 +54,14 @@
 }
 
 #pragma mark - custom methods
+- (void)ConstraintView
+{
+    _myCentralTable.translatesAutoresizingMaskIntoConstraints = NO;
+    NSDictionary *views = NSDictionaryOfVariableBindings(_myCentralTable);
+    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-50-[_myCentralTable]-50-|" options:0 metrics:nil views:views]];
+    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-30-[_myCentralTable]-30-|" options:0 metrics:nil views:views]];
+}
+
 - (void)UpdateCentralList:(NSString *)name
 {
     [self.centralList addObject:name];

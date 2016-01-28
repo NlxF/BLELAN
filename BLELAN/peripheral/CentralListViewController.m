@@ -6,43 +6,81 @@
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
 
+#import "CentralListView.h"
+#import "CentralListViewCell.h"
 #import "CentralListViewController.h"
 #import "helper.h"
-#import "Constants.h"
+#import "../Constants.h"
 
+
+static NSString *cellIdentity = @"PopListViewCell";
 
 @interface CentralListViewController ()
 
 @property (nonatomic, strong) NSMutableArray *centralList;
 @property (nonatomic, strong) UITableView  *myCentralTable;
-
+@property (nonatomic, strong) NSString     *tableTitle;
 @end
 
 @implementation CentralListViewController
 
+- (CGRect)tableRect
+{
+    CGRect deviceRect = [self deviceRect];
+    CGRect tableRect = CGRectMake((deviceRect.size.width - CENTRALTABLEVIEWWITH) / 2,
+                                  (deviceRect.size.height- CENTRALTABLEVIEWHEIGHT + CENTRALTABLEVIEW_HEADER_HEIGHT) / 2,
+                                  CENTRALTABLEVIEWWITH,
+                                  CENTRALTABLEVIEWHEIGHT);
+    return tableRect;
+}
+
+- (CGRect)deviceRect
+{
+    //获取当前设备的状态
+    CGRect rect = [[UIScreen mainScreen] bounds];
+//    if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
+//        //rect.size = CGSizeMake(rect.size.height, rect.size.width);
+//    }
+    return rect;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    //获取当前设备的状态
-    CGRect rect = [Helper getCurrentDeviceRect];
-    self.view.frame = rect;
-    //self.view.opaque = YES;
+
+    self.view = [[CentralListView alloc] initWithFrame:[self deviceRect]
+                                                 style:UITableViewStylePlain
+                                                 title:_tableTitle];
     self.view.alpha = 0.1;
-    self.view.backgroundColor = [UIColor whiteColor];
+    self.view.backgroundColor = [UIColor clearColor];
     
-    //rect.size.width *= 0.43;
-    //rect.size.height -= 50;
-    _myCentralTable = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
-    [_myCentralTable setDelegate:self];
-    [_myCentralTable setDataSource:self];
-    [self.view addSubview:_myCentralTable];
-    
-    [self ConstraintView];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    
+}
+
+- (id)initWithTitle:(NSString *)aTitle
+{
+    if (self = [super init]) {
+        _tableTitle = aTitle;
+        _myCentralTable = [[UITableView alloc] initWithFrame:[self tableRect]
+                                                       style:UITableViewStylePlain];
+        
+        _myCentralTable.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
+        _myCentralTable.backgroundColor = [UIColor clearColor];
+        [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:cellIdentity];
+        _myCentralTable.delegate = self;
+        _myCentralTable.dataSource = self;
+        [self.view addSubview:_myCentralTable];
+    }
+    
+    return self;
 }
 
 - (NSMutableArray *)centralList
@@ -54,12 +92,33 @@
 }
 
 #pragma mark - custom methods
-- (void)ConstraintView
+- (void)fadeIn {
+    self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
+    self.view.alpha = 0;
+    [UIView animateWithDuration:.35 animations:^{
+        self.view.alpha = 1;
+        self.view.transform = CGAffineTransformMakeScale(1, 1);
+    }];
+    
+}
+
+- (void)fadeOut {
+    [UIView animateWithDuration:.35 animations:^{
+        self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
+        self.view.alpha = 0.0;
+    } completion:^(BOOL finished) {
+        if (finished) {
+            [[NSNotificationCenter defaultCenter] removeObserver:self];
+            [self.view removeFromSuperview];
+        }
+    }];
+}
+
+- (void)orientationDidChange:(NSNotification *)not
 {
-    _myCentralTable.translatesAutoresizingMaskIntoConstraints = NO;
-    NSDictionary *views = NSDictionaryOfVariableBindings(_myCentralTable);
-    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-50-[_myCentralTable]-50-|" options:0 metrics:nil views:views]];
-    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|-30-[_myCentralTable]-30-|" options:0 metrics:nil views:views]];
+    [self.view setFrame:[self deviceRect]];
+    [self.myCentralTable setFrame:[self tableRect]];
+    [self.view setNeedsDisplay];
 }
 
 - (void)UpdateCentralList:(NSString *)name
@@ -70,6 +129,26 @@
     NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.centralList count]-1 inSection:0]];
     [self.myCentralTable insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
     [self.myCentralTable endUpdates];
+}
+
+- (void)showTableView:(UIViewController *)fView animated:(BOOL)animated
+{
+    //add change orientation notification
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(orientationDidChange:)
+                                                 name:UIApplicationDidChangeStatusBarOrientationNotification
+                                               object:nil];
+    [fView.view addSubview:self.view];
+    [fView addChildViewController:self];
+    if (animated) {
+        [self fadeIn];
+    }
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    // dismiss self
+    [self fadeOut];
 }
 
 #pragma mark - Table view data source
@@ -84,10 +163,11 @@
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CENTRALREUSEIDENTIFIER forIndexPath:indexPath];
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentity forIndexPath:indexPath];
     if (cell == nil) {
-        //生成带有标识的cell
-        cell = [(UITableViewCell *)[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CENTRALREUSEIDENTIFIER];
+        //reuse cell
+        cell = [(UITableViewCell *)[CentralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentity];
     }
     cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
     
@@ -106,7 +186,12 @@
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
     
 }
+#pragma mark - table view delegate
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+
+}
 
 /*
 #pragma mark - Navigation

@@ -12,6 +12,14 @@
 typedef unsigned short                  UInt16;
 typedef unsigned char                   UInt8;
 
+/*table view相关*/
+//tableview 宽
+#define CENTRALTABLEVIEWWITH 140
+//tableview 高
+#define CENTRALTABLEVIEWHEIGHT 240
+#define CENTRALTABLEVIEW_HEADER_HEIGHT 50.
+#define RADIUS 5.
+
 /*列表刷新频率*/
 #define REFRESHRATE                 0.5
 

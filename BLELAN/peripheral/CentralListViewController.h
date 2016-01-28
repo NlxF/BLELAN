@@ -10,6 +10,10 @@
 
 @interface CentralListViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
 
+- (id)initWithTitle:(NSString *)aTitle;
+
 - (void)UpdateCentralList:(NSString *)name;
+
+- (void)showTableView:(UIViewController *)fView animated:(BOOL)animated;
 
 @end

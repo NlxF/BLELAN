@@ -2,35 +2,148 @@
 //  PeripheralListViewController.m
 //  BLELAN
 //
-//  Created by luxiaofei on 16/1/16.
+//  Created by luxiaofei on 16/1/23.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
-#import "helper.h"
-#import "Constants.h"
-#import "TableViewCell.h"
+
+#import "PeripheralListView.h"
+#import "PeripheralListViewCell.h"
 #import "PeripheralListViewController.h"
-#import <CoreBluetooth/CoreBluetooth.h>
+#import "helper.h"
+#import "../Constants.h"
+
+
+static NSString *cellIdentity = @"PopListViewCell";
 
 @interface PeripheralListViewController ()
 
 @property (nonatomic, strong) NSMutableArray   *peripheralsList;
 @property (nonatomic, strong) UITableView        *peripheralTableView;
 
+@property (nonatomic, strong) NSString     *tableTitle;
 @end
 
 @implementation PeripheralListViewController
 
+- (CGRect)tableRect
+{
+    CGRect deviceRect = [self deviceRect];
+    CGRect tableRect = CGRectMake((deviceRect.size.width - CENTRALTABLEVIEWWITH) / 2,
+                                  (deviceRect.size.height- CENTRALTABLEVIEWHEIGHT + CENTRALTABLEVIEW_HEADER_HEIGHT) / 2,
+                                  CENTRALTABLEVIEWWITH,
+                                  CENTRALTABLEVIEWHEIGHT);
+    return tableRect;
+}
+
+- (CGRect)deviceRect
+{
+    //获取当前设备的状态
+    CGRect rect = [[UIScreen mainScreen] bounds];
+//    if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
+//        //rect.size = CGSizeMake(rect.size.height, rect.size.width);
+//    }
+    return rect;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+
+    self.view = [[PeripheralListView alloc] initWithFrame:[self deviceRect]
+                                                 style:UITableViewStylePlain
+                                                 title:_tableTitle];
+    self.view.alpha = 0.1;
+    self.view.backgroundColor = [UIColor clearColor];
     
-    //获取当前设备的状态
-    CGRect rect = [Helper getCurrentDeviceRect];
-    _peripheralTableView = [[UITableView alloc] initWithFrame:rect style:UITableViewStylePlain];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    
+}
+
+- (id)initWithTitle:(NSString *)aTitle
+{
+    if (self = [super init]) {
+        _tableTitle = aTitle;
+        _peripheralTableView = [[UITableView alloc] initWithFrame:[self tableRect]
+                                                       style:UITableViewStylePlain];
+        
+        _peripheralTableView.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
+        _peripheralTableView.backgroundColor = [UIColor clearColor];
+        [_peripheralTableView registerClass:[PeripheralListViewCell class] forCellReuseIdentifier:cellIdentity];
+        _peripheralTableView.delegate = self;
+        _peripheralTableView.dataSource = self;
+        [self.view addSubview:_peripheralTableView];
+    }
+    
+    return self;
+}
+
+- (NSMutableArray *)centralList
+{
+    if (_peripheralsList == nil) {
+        _peripheralsList = [[NSMutableArray alloc] init];
+    }
+    return _peripheralsList;
+}
+
+#pragma mark - custom methods
+- (void)fadeIn {
+    self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
+    self.view.alpha = 0;
+    [UIView animateWithDuration:.35 animations:^{
+        self.view.alpha = 1;
+        self.view.transform = CGAffineTransformMakeScale(1, 1);
+    }];
+    
+}
+
+- (void)fadeOut {
+    [UIView animateWithDuration:.35 animations:^{
+        self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
+        self.view.alpha = 0.0;
+    } completion:^(BOOL finished) {
+        if (finished) {
+            [[NSNotificationCenter defaultCenter] removeObserver:self];
+            [self.view removeFromSuperview];
+        }
+    }];
+}
+
+- (void)orientationDidChange:(NSNotification *)not
+{
+    [self.view setFrame:[self deviceRect]];
+    [self.peripheralTableView setFrame:[self tableRect]];
+    [self.view setNeedsDisplay];
+}
+
+- (void)UpdateCentralList:(NSString *)name
+{
+    [self.centralList addObject:name];
+    
+    [self.peripheralTableView beginUpdates];
+    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.centralList count]-1 inSection:0]];
+    [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
+    [self.peripheralTableView endUpdates];
+}
+
+- (void)showTableView:(UIViewController *)fView animated:(BOOL)animated
+{
+    //add change orientation notification
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(orientationDidChange:)
+                                                 name:UIApplicationDidChangeStatusBarOrientationNotification
+                                               object:nil];
+    [fView.view addSubview:self.view];
+    [fView addChildViewController:self];
+    if (animated) {
+        [self fadeIn];
+    }
 }
 
 #pragma mark - custom methods
@@ -46,6 +159,11 @@
     
 }
 
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    
+    // dismiss self
+    [self fadeOut];
+}
 
 #pragma mark - Table view data source
 
@@ -54,41 +172,39 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.peripheralsList count];
+    return [self.centralList count];
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    //当前是否有可用cell
-    UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:REUSEIDENTIFIER forIndexPath:indexPath];
+    
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentity forIndexPath:indexPath];
     if (cell == nil) {
-        //生成带有标识的cell
-        cell = [(UITableViewCell *)[TableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:REUSEIDENTIFIER];
+        //reuse cell
+        cell = [(UITableViewCell *)[PeripheralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentity];
     }
-    
-    showData data;
-    NSValue *value = [self.peripheralsList objectAtIndex:indexPath.row];
-    [value getValue:&data];
-    
-    cell.textLabel.text = [NSString stringWithUTF8String:data.name];
-    //cell.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
+    cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
     
     return cell;
 }
 
-#pragma mark - table view delegate
 
-- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return 25;
+
+// Override to support conditional editing of the table view.
+- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+    // Return NO if you do not want the specified item to be editable.
+    return YES;
 }
+
+// Override to support rearranging the table view.
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
+    
+}
+#pragma mark - table view delegate
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:CONNECTNOTF
-                                                                                object:self
-                                                                              userInfo:@{NOTIFICATIONKEY: indexPath}];
-    NSLog(@"发起蓝牙连接通知");
+
 }
 
 /*

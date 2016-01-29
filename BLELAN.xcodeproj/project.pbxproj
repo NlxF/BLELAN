@@ -34,6 +34,10 @@
 		7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A9D1C4B6835006F1F71 /* helper.m */; };
 		7A9D0AA21C4B9577006F1F71 /* Payload.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0AA01C4B9577006F1F71 /* Payload.h */; };
 		7A9D0AA31C4B9577006F1F71 /* Payload.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0AA11C4B9577006F1F71 /* Payload.m */; };
+		7AD706A71C5A66AE00645F61 /* PeripheralListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 7AD706A31C5A66AE00645F61 /* PeripheralListView.h */; };
+		7AD706A81C5A66AE00645F61 /* PeripheralListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AD706A41C5A66AE00645F61 /* PeripheralListView.m */; };
+		7AD706A91C5A66AE00645F61 /* PeripheralListViewCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 7AD706A51C5A66AE00645F61 /* PeripheralListViewCell.h */; };
+		7AD706AA1C5A66AE00645F61 /* PeripheralListViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AD706A61C5A66AE00645F61 /* PeripheralListViewCell.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +69,10 @@
 		7A9D0A9D1C4B6835006F1F71 /* helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = helper.m; path = utility/helper.m; sourceTree = "<group>"; };
 		7A9D0AA01C4B9577006F1F71 /* Payload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Payload.h; path = model/Payload.h; sourceTree = "<group>"; };
 		7A9D0AA11C4B9577006F1F71 /* Payload.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Payload.m; path = model/Payload.m; sourceTree = "<group>"; };
+		7AD706A31C5A66AE00645F61 /* PeripheralListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PeripheralListView.h; path = central/PeripheralListView.h; sourceTree = "<group>"; };
+		7AD706A41C5A66AE00645F61 /* PeripheralListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PeripheralListView.m; path = central/PeripheralListView.m; sourceTree = "<group>"; };
+		7AD706A51C5A66AE00645F61 /* PeripheralListViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PeripheralListViewCell.h; path = central/PeripheralListViewCell.h; sourceTree = "<group>"; };
+		7AD706A61C5A66AE00645F61 /* PeripheralListViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PeripheralListViewCell.m; path = central/PeripheralListViewCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +177,10 @@
 		7A9D0A951C4AA002006F1F71 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				7AD706A31C5A66AE00645F61 /* PeripheralListView.h */,
+				7AD706A41C5A66AE00645F61 /* PeripheralListView.m */,
+				7AD706A51C5A66AE00645F61 /* PeripheralListViewCell.h */,
+				7AD706A61C5A66AE00645F61 /* PeripheralListViewCell.m */,
 				7A9D0A911C4A9515006F1F71 /* PeripheralListViewController.h */,
 				7A9D0A921C4A9515006F1F71 /* PeripheralListViewController.m */,
 				7A9D0A961C4AA026006F1F71 /* TableViewCell.h */,
@@ -194,6 +206,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5766150C1C5A096A0026377D /* CentralListView.h in Headers */,
+				7AD706A71C5A66AE00645F61 /* PeripheralListView.h in Headers */,
 				7A9D0A981C4AA026006F1F71 /* TableViewCell.h in Headers */,
 				572DD3371C51CE91007368E6 /* comm.h in Headers */,
 				7A9D0A7D1C49DEC7006F1F71 /* CCentral.h in Headers */,
@@ -206,6 +219,7 @@
 				7A9D0A9E1C4B6835006F1F71 /* helper.h in Headers */,
 				57A6E37F1C48E7DA00902F01 /* Blelan.h in Headers */,
 				5766150E1C5A096A0026377D /* CentralListViewCell.h in Headers */,
+				7AD706A91C5A66AE00645F61 /* PeripheralListViewCell.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,6 +299,8 @@
 				7A9D0AA31C4B9577006F1F71 /* Payload.m in Sources */,
 				576615111C5A096A0026377D /* CentralListViewController.m in Sources */,
 				5766150D1C5A096A0026377D /* CentralListView.m in Sources */,
+				7AD706AA1C5A66AE00645F61 /* PeripheralListViewCell.m in Sources */,
+				7AD706A81C5A66AE00645F61 /* PeripheralListView.m in Sources */,
 				7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */,
 				7A9D0A991C4AA026006F1F71 /* TableViewCell.m in Sources */,
 				5766150F1C5A096A0026377D /* CentralListViewCell.m in Sources */,

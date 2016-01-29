@@ -31,25 +31,28 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 @end
 
 
-@interface LightAir : NSObject
+@interface LightLAN : NSObject
 
 /*******************************common*********************************/
 
 - (instancetype)initWithType:(LightAirType)type name:(NSString*)name mode:(BOOL)isStrategy;
 
-- (void)startDevice;
+- (void)sendData:(NSData *)data;
 
-- (void)stopDevice;
+- (void)setDelegate:(id<BlelanDelegate>)delegate;
 
-- (void)sendMessageWithData:(NSData *)data;
+- (void)setParentController:(UIViewController *)fvc;
 
 /***************************peripheral*********************************/
+- (void)createRoom;
 
-- (void)startGame;
+- (void)startRoom;
 
-- (void)stopGame;
-
+- (void)closeRoom;
 /*******************************central*********************************/
 
-- (void)quitGame;
+- (void)scanRoom;
+
+- (void)leaveRoom;
+
 @end

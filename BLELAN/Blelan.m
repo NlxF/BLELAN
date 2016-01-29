@@ -9,11 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "helper.h"
 #import "Blelan.h"
+#import "Constants.h"
 #import "central/CCentral.h"
 #import "peripheral/CPeripheral.h"
 
 
-@interface LightAir()
+@interface LightLAN()
 {
     BOOL  isCentral;
 }
@@ -25,7 +26,9 @@
 @end
 
 
-@implementation LightAir
+@implementation LightLAN
+
+#pragma mark - common
 
 /**
  *  初始化设备时指定类型，作为外设还是中心
@@ -34,7 +37,7 @@
  *
  *  @param name 指定设备名称
  *
- *  @param isStrategy 游戏类型，竞技或策略。
+ *  @param isStrategy 游戏类型，竞技或策略。策略类的话需要维护调度中心，竞技类则不用。
  *
  *  @return LightAir实例
  */
@@ -63,51 +66,21 @@
     }
 }
 
-/**
- *  启动设备，作为外设，或者中心，如果为外设则开启广播，如果为中心则开始扫描
- *
- *  @param mode 通讯类型
- */
-- (void)startDevice
+- (void)setParentController:(UIViewController *)fvc
 {
-    if(isCentral){
-        [_central scan];
+    if (isCentral) {
+        
     }else{
-        //[_peripheral startAdvertising];
+        [_peripheral setParentViewController:fvc];
     }
 }
-
 /**
- *  停止设备动作，如果为外设则停止广播，如果为中心则停止扫描
- */
-- (void)stopDevice
-{
-    if(isCentral){
-        [_central cancel];
-    }else{
-        [_peripheral stopAdvertising];
-    }
-}
-
-/**
- *  作为外设的时候可以启动游戏
- */
-- (void)startGame
-{
-    if(!isCentral){
-        [_peripheral startGame];
-    }else{
-        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
-    }
-}
-
-/**
- *  发送数据
- *
- *  @param data 准备好发送的数据
- *
+*  发送数据
+*
+*  @param data 准备好发送的数据
+*
 */
-- (void)sendMessageWithData:(NSData *)data
+- (void)sendData:(NSData *)data
 {
     if(isCentral){
         //中心经由外设转发
@@ -115,6 +88,61 @@
     }else{
         //外设本身直接发送
         [_peripheral sendData:data];
+    }
+}
+
+#pragma mark -  as a peripheral
+
+/**
+ *  启动设备，作为外设开启广播
+ *
+ */
+- (void)createRoom
+{
+    if(!isCentral){
+        [_peripheral startAdvertising];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+    }
+}
+
+- (void)startRoom
+{
+    if(!isCentral){
+        [_peripheral startRoom];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+    }
+}
+
+/**
+ *  停止设备动作，如果为外设则停止广播，如果为中心则停止扫描
+ */
+- (void)closeRoom
+{
+    if(!isCentral){
+        [_peripheral stopAdvertising];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能关闭房间");
+    }
+}
+
+#pragma mark - central
+- (void)scanRoom
+{
+    if(isCentral){
+        [_central scan];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为中心启动时才能扫描房间");
+    }
+}
+
+- (void)leaveRoom
+{
+    if(isCentral){
+        [_central cancel];
+    }else{
+        ALERT(@"设备类型错误", @"设备只有作为中心启动时才能离开房间");
     }
 }
 

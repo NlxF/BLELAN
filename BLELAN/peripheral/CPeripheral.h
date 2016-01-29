@@ -13,15 +13,17 @@
 
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
-//- (void)startAdvertising;
+- (void)startAdvertising;
 
 - (void)stopAdvertising;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
+- (void)setParentViewController:(UIViewController *)fvc;
+
 - (NSArray *)deviceList;
 
-- (void)startGame;
+- (void)startRoom;
 
 - (void)forwardMessage:(NSData *)mesage;
 

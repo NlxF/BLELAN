@@ -29,6 +29,7 @@ typedef unsigned char                   UInt8;
 /*central tableview cell 标识*/
 #define CENTRALREUSEIDENTIFIER @"centralReuseIdentifier"
 
+
 /*蓝牙连接时的通知*/
 #define CONNECTNOTF               @"connectNotify"
 /*蓝牙断开时的通知*/

@@ -25,12 +25,14 @@
 @property (nonatomic, strong) CBMutableCharacteristic *gameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
-
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
 @property (nonatomic, strong) NSString *peripheralName;
-@property (nonatomic, assign) BOOL  isStrategy;      //是否需要外设调度，如果为策略游戏则需要调度，玩家顺序发牌；如果为竞技，则不需要
+@property (nonatomic, assign) BOOL  isStrategy;
 @property (nonatomic, strong) CentralListViewController *centralTableViewCtrl;
+@property (nonatomic,weak) UIViewController *fvctl;
+@property (nonatomic, assign) BOOL isPrepare;
+
 @end
 
 @implementation CPeripheral
@@ -53,13 +55,18 @@
         _isStrategy = isStrategy;
         //在设备列表中的位置
         selfIndex = 1;
+        //是否准备好广播
+        _isPrepare = NO;
     }
     return self;
 }
 
-
 - (void)startAdvertising
 {
+    while (!_isPrepare) {
+        [NSThread sleepForTimeInterval:0.5];
+    }
+    
     [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: _peripheralName,
                                             CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                             ]}];
@@ -68,10 +75,8 @@
     dispatch_async(dispatch_get_main_queue(), ^{
         _centralTableViewCtrl = [[CentralListViewController alloc] init];
         
-        UIViewController *rootViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
-        [rootViewController presentViewController:_centralTableViewCtrl animated:YES completion:^{
-            NSLog(@"显示连接设备列表");
-        }];
+        [_centralTableViewCtrl showTableView:_fvctl animated:YES];
+        NSLog(@"显示连接设备列表");
     });
 }
 
@@ -84,6 +89,11 @@
 - (void)setDelegate:(id<BlelanDelegate>)delegate
 {
     _delegate = delegate;
+}
+
+- (void)setParentViewController:(UIViewController *)fvc
+{
+    _fvctl = fvc;
 }
 
 /**
@@ -117,7 +127,7 @@
     return (NSArray*)arr;
 }
 
-- (void)startGame
+- (void)startRoom
 {
     //停止广播
     [self stopAdvertising];
@@ -158,7 +168,6 @@
 }
 
 #pragma mark - Peripheral Manager Delegate Methods
-
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral
 {
     // Opt out from any other state
@@ -201,8 +210,8 @@
         ALERT(@"服务发布失败", [error localizedDescription]);
         return;
     }
+    _isPrepare = YES;
     NSLog(@"发布服务");
-    [self startAdvertising];
 }
 
 //开始广播的回调

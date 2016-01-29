@@ -11,7 +11,7 @@
 
 @interface ViewController () <BlelanDelegate>
 
-@property (nonatomic, strong) LightAir *ligjtair;
+@property (nonatomic, strong) LightLAN *ligjtair;
 @end
 
 @implementation ViewController
@@ -20,8 +20,8 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
-    _ligjtair = [[LightAir alloc] initWithType:PeripheralType name:@"ROM1" mode:YES];
-    [_ligjtair startDevice];
+    _ligjtair = [[LightLAN alloc] initWithType:PeripheralType name:@"ROOM-1" mode:YES];
+    [_ligjtair createRoom];
     
 }
 

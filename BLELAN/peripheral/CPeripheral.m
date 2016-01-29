@@ -30,7 +30,7 @@
 @property (nonatomic, strong) NSString *peripheralName;
 @property (nonatomic, assign) BOOL  isStrategy;
 @property (nonatomic, strong) CentralListViewController *centralTableViewCtrl;
-@property (nonatomic,weak) UIViewController *fvctl;
+@property (nonatomic,   weak) UIViewController *attachedViewController;
 @property (nonatomic, assign) BOOL isPrepare;
 
 @end
@@ -73,9 +73,10 @@
     
     //show table view
     dispatch_async(dispatch_get_main_queue(), ^{
-        _centralTableViewCtrl = [[CentralListViewController alloc] init];
+        _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"Linked in device"];
+        _centralTableViewCtrl.delegate = self;
         
-        [_centralTableViewCtrl showTableView:_fvctl animated:YES];
+        [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];
         NSLog(@"显示连接设备列表");
     });
 }
@@ -83,6 +84,7 @@
 
 - (void)stopAdvertising
 {
+    NSLog(@"停止广播");
     [_peripheralMgr stopAdvertising];
 }
 
@@ -91,9 +93,9 @@
     _delegate = delegate;
 }
 
-- (void)setParentViewController:(UIViewController *)fvc
+- (void)setAttachedViewController:(UIViewController *)fvc
 {
-    _fvctl = fvc;
+    _attachedViewController = fvc;
 }
 
 /**
@@ -207,7 +209,7 @@
 {
     if (error)
     {
-        ALERT(@"服务发布失败", [error localizedDescription]);
+        ALERT(_attachedViewController, @"服务发布失败", [error localizedDescription]);
         return;
     }
     _isPrepare = YES;
@@ -219,7 +221,7 @@
 {
     if (error)
     {
-        ALERT(@"广播失败", [error localizedDescription]);
+        ALERT(_attachedViewController, @"广播失败", [error localizedDescription]);
         return;
     }
     NSLog(@"开始广播");

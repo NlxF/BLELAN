@@ -10,7 +10,7 @@
 
 @interface CentralManager()
 
-@property (nonatomic, strong) NSMutableArray *centralName;      //中心设备名。
+@property (nonatomic, strong) NSMutableArray *centralName;        //中心设备名。
 @property (nonatomic, strong) NSMutableArray *centralList;        //代表中心设备的CBCentral对象
 
 @end
@@ -26,7 +26,7 @@
     return _centralName;
 }
 
-- (NSMutableArray *)centrals
+- (NSMutableArray *)centralList
 {
     if (_centralList == nil) {
         _centralList = [[NSMutableArray alloc] init];

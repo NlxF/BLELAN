@@ -35,13 +35,11 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 /*******************************common*********************************/
 
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name mode:(BOOL)isStrategy;
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name attached:(UIViewController *)vc mode:(BOOL)isStrategy;
 
 - (void)sendData:(NSData *)data;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
-
-- (void)setParentController:(UIViewController *)fvc;
 
 /***************************peripheral*********************************/
 - (void)createRoom;

@@ -14,9 +14,9 @@ typedef unsigned char                   UInt8;
 
 /*table view相关*/
 //tableview 宽
-#define CENTRALTABLEVIEWWITH 140
+#define CENTRALTABLEVIEWWITH 200
 //tableview 高
-#define CENTRALTABLEVIEWHEIGHT 240
+#define CENTRALTABLEVIEWHEIGHT 350
 #define CENTRALTABLEVIEW_HEADER_HEIGHT 50.
 #define RADIUS 5.
 
@@ -31,12 +31,12 @@ typedef unsigned char                   UInt8;
 
 
 /*蓝牙连接时的通知*/
-#define CONNECTNOTF               @"connectNotify"
+//#define CONNECTNOTF               @"connectNotify"
 /*蓝牙断开时的通知*/
-#define DISCONNECTNOTF            @"disconnectNotify"
+//#define DISCONNECTNOTF            @"disconnectNotify"
 
 /*发起蓝牙连接通知时传递给接收者的userinfo的key*/
-#define NOTIFICATIONKEY           @"IDX"
+//#define NOTIFICATIONKEY           @"IDX"
 
 /*外设开始通知*/
 #define PERIPHERALSTART           @"peripheralStart"

@@ -13,7 +13,7 @@
 #import "../Constants.h"
 
 
-static NSString *cellIdentity = @"PopListViewCell";
+static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @interface PeripheralListViewController ()
 
@@ -25,30 +25,10 @@ static NSString *cellIdentity = @"PopListViewCell";
 
 @implementation PeripheralListViewController
 
-- (CGRect)tableRect
-{
-    CGRect deviceRect = [self deviceRect];
-    CGRect tableRect = CGRectMake((deviceRect.size.width - CENTRALTABLEVIEWWITH) / 2,
-                                  (deviceRect.size.height- CENTRALTABLEVIEWHEIGHT + CENTRALTABLEVIEW_HEADER_HEIGHT) / 2,
-                                  CENTRALTABLEVIEWWITH,
-                                  CENTRALTABLEVIEWHEIGHT);
-    return tableRect;
-}
-
-- (CGRect)deviceRect
-{
-    //获取当前设备的状态
-    CGRect rect = [[UIScreen mainScreen] bounds];
-//    if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
-//        //rect.size = CGSizeMake(rect.size.height, rect.size.width);
-//    }
-    return rect;
-}
-
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.view = [[PeripheralListView alloc] initWithFrame:[self deviceRect]
+    self.view = [[PeripheralListView alloc] initWithFrame:[Helper deviceRect]
                                                  style:UITableViewStylePlain
                                                  title:_tableTitle];
     self.view.alpha = 0.1;
@@ -61,21 +41,16 @@ static NSString *cellIdentity = @"PopListViewCell";
     // Dispose of any resources that can be recreated.
 }
 
-- (void)viewWillAppear:(BOOL)animated
-{
-    
-}
-
 - (id)initWithTitle:(NSString *)aTitle
 {
     if (self = [super init]) {
         _tableTitle = aTitle;
-        _peripheralTableView = [[UITableView alloc] initWithFrame:[self tableRect]
+        _peripheralTableView = [[UITableView alloc] initWithFrame:[Helper tableRect]
                                                        style:UITableViewStylePlain];
         
         _peripheralTableView.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
         _peripheralTableView.backgroundColor = [UIColor clearColor];
-        [_peripheralTableView registerClass:[PeripheralListViewCell class] forCellReuseIdentifier:cellIdentity];
+        [_peripheralTableView registerClass:[PeripheralListViewCell class] forCellReuseIdentifier:peripheralCellIdentity];
         _peripheralTableView.delegate = self;
         _peripheralTableView.dataSource = self;
         [self.view addSubview:_peripheralTableView];
@@ -84,7 +59,7 @@ static NSString *cellIdentity = @"PopListViewCell";
     return self;
 }
 
-- (NSMutableArray *)centralList
+- (NSMutableArray *)peripheralsList
 {
     if (_peripheralsList == nil) {
         _peripheralsList = [[NSMutableArray alloc] init];
@@ -93,41 +68,19 @@ static NSString *cellIdentity = @"PopListViewCell";
 }
 
 #pragma mark - custom methods
-- (void)fadeIn {
-    self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
-    self.view.alpha = 0;
-    [UIView animateWithDuration:.35 animations:^{
-        self.view.alpha = 1;
-        self.view.transform = CGAffineTransformMakeScale(1, 1);
-    }];
-    
-}
-
-- (void)fadeOut {
-    [UIView animateWithDuration:.35 animations:^{
-        self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
-        self.view.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        if (finished) {
-            [[NSNotificationCenter defaultCenter] removeObserver:self];
-            [self.view removeFromSuperview];
-        }
-    }];
-}
-
 - (void)orientationDidChange:(NSNotification *)not
 {
-    [self.view setFrame:[self deviceRect]];
-    [self.peripheralTableView setFrame:[self tableRect]];
+    [self.view setFrame:[Helper deviceRect]];
+    [self.peripheralTableView setFrame:[Helper tableRect]];
     [self.view setNeedsDisplay];
 }
 
-- (void)UpdateCentralList:(NSString *)name
+- (void)UpdatePeripheralList:(NSString *)name
 {
-    [self.centralList addObject:name];
+    [self.peripheralsList addObject:name];
     
     [self.peripheralTableView beginUpdates];
-    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.centralList count]-1 inSection:0]];
+    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
     [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
     [self.peripheralTableView endUpdates];
 }
@@ -142,27 +95,23 @@ static NSString *cellIdentity = @"PopListViewCell";
     [fView.view addSubview:self.view];
     [fView addChildViewController:self];
     if (animated) {
-        [self fadeIn];
+        [Helper fadeIn:self.view];
     }
 }
 
-#pragma mark - custom methods
-
-- (void)UpdatePeripheralList:(NSValue *)peripheralValue
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    [self.peripheralsList addObject:peripheralValue];
+    UITouch *touch = [touches anyObject];
+    CGPoint point = [touch locationInView:self.view];
+    if(CGRectContainsPoint([Helper titleRect], point))
+        return;
     
-    [self.peripheralTableView beginUpdates];
-    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
-    [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
-    [self.peripheralTableView endUpdates];
-    
-}
-
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
+        [_delegate stopScanning];
+    }
     
     // dismiss self
-    [self fadeOut];
+    [Helper fadeOut:self.view];
 }
 
 #pragma mark - Table view data source
@@ -172,18 +121,22 @@ static NSString *cellIdentity = @"PopListViewCell";
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.centralList count];
+    return [self.peripheralsList count];
 }
 
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentity forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:peripheralCellIdentity forIndexPath:indexPath];
     if (cell == nil) {
         //reuse cell
-        cell = [(UITableViewCell *)[PeripheralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentity];
+        cell = [(UITableViewCell *)[PeripheralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:peripheralCellIdentity];
     }
-    cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
+    NSValue *dataValue = [self.peripheralsList objectAtIndex:indexPath.row];
+    showData data;
+    [dataValue getValue:&data];
+    cell.textLabel.text = [NSString stringWithUTF8String:data.name];
+    cell.imageView.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
     
     return cell;
 }
@@ -204,7 +157,12 @@ static NSString *cellIdentity = @"PopListViewCell";
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-
+    if ([_delegate respondsToSelector:@selector(connect:)]) {
+        [_delegate connect:indexPath];
+    }
+    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
+        [_delegate stopScanning];
+    }
 }
 
 /*

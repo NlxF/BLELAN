@@ -10,15 +10,26 @@
 #import "helper.h"
 #import "BLELAN.h"
 
+@protocol myCentralDelegate <NSObject>
 
-@interface CCentral : NSObject <CentralDelegate>
+- (void)connect:(NSIndexPath *)path;
+
+- (void)stopScanning;
+
+@end
+
+@interface CCentral : NSObject <CentralDelegate, myCentralDelegate>
 
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
--(void) scan;
--(void) cancel;
--(void) connect:(NSNotification*)notification;
+- (void)scan;
+
+- (void)leanRoom;
+
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
+
 - (void)sendData:(NSData *)message;
+
+- (void)setAttachedViewController:(UIViewController *)fvc;
 
 @end

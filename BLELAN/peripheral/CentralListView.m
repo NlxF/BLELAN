@@ -58,8 +58,8 @@
     // Draw the title and the separator with shadow
     CGContextSetShadowWithColor(ctx, CGSizeMake(0, 1), 0.5f, [UIColor blackColor].CGColor);
     [[UIColor colorWithRed:0.020 green:0.549 blue:0.961 alpha:1.] setFill];
-    CGRect titleRect = CGRectMake(x + 10, y + 10 + 5, CENTRALTABLEVIEWWITH, 30);
     
+    CGRect titleRect = CGRectMake(x, y + 10 + 5, CENTRALTABLEVIEWWITH, 30);
     NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [style setAlignment:NSTextAlignmentCenter];
     [_title drawInRect:titleRect withAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16.], NSParagraphStyleAttributeName:style}];

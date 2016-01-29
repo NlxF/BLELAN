@@ -12,8 +12,12 @@
 #import "comm.h"
 
 
-#define ALERT(title, msg)  UIAlertView *alert = [[UIAlertView alloc] initWithTitle:title message:msg delegate:nil  cancelButtonTitle:@"ok" otherButtonTitles: nil];\
-    [alert show];
+#define ALERT(parent, title, msg)   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title \
+                                                                                                   message:msg \
+                                                                                            preferredStyle:UIAlertControllerStyleAlert]; \
+                                    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){}]; \
+                                    [alert addAction:defaultAction]; \
+                                    [parent presentViewController:alert animated:YES completion:nil];
 
 /**
  *  中心和外设分别需要实现的协议
@@ -49,8 +53,16 @@ typedef struct
 
 @interface Helper : NSObject
 
-+ (CGRect) getCurrentDeviceRect;
++ (CGRect)titleRect;
+
++ (CGRect)tableRect;
+
++ (CGRect)deviceRect;
 
 + (NSString *)imageNameBySignal:(float)value;
+
++ (void)fadeIn:(UIView *)thisview;
+
++ (void)fadeOut:(UIView *)thisview;
 
 @end

@@ -7,26 +7,31 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "BLELAN.h"
+#import "helper.h"
+#import "Blelan.h"
 
-@interface CPeripheral : NSObject <PeripheralDelegate>
+@protocol myPeripheralDelegate <NSObject>
+
+- (void)stopAdvertising;
+
+@end
+
+@interface CPeripheral : NSObject <PeripheralDelegate, myPeripheralDelegate>
 
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
 - (void)startAdvertising;
 
-- (void)stopAdvertising;
-
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
-- (void)setParentViewController:(UIViewController *)fvc;
-
-- (NSArray *)deviceList;
+- (void)setAttachedViewController:(UIViewController *)fvc;
 
 - (void)startRoom;
 
 - (void)forwardMessage:(NSData *)mesage;
 
 - (void)sendData:(NSData *)data;
+
+- (NSArray *)deviceList;
 
 @end

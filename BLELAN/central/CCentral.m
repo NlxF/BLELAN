@@ -25,10 +25,11 @@
 @property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
 @property (strong, nonatomic) CBCharacteristic           *gameCharacteristic;
 @property (strong, nonatomic) NSMutableArray               *allPeripherals;
-@property (strong, nonatomic) PeripheralListViewController *listView;
+@property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 @property (strong, nonatomic) NSString                     *centralName;
+@property (nonatomic,   weak) UIViewController *attachedViewController;
 @property (nonatomic, assign) BOOL                         isStrategy;
-
+@property (nonatomic, assign) BOOL                         isPrepare;
 @end
 
 @implementation CCentral
@@ -41,7 +42,7 @@
         //start up the CBCentralManager
         _centralMgr = [[CBCentralManager alloc] initWithDelegate:self
                                                            queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-                                                         options:@{CBCentralManagerOptionRestoreIdentifierKey:[NSNumber numberWithBool:YES]}];
+                                                         options:nil];
         
         //外设列表;
         _allPeripherals = [[NSMutableArray alloc] init];
@@ -51,6 +52,9 @@
         
         //模式
         _isStrategy = isStrategy;
+        
+        //是否准备好扫描
+        _isPrepare = NO;
     }
     return self;
 }
@@ -60,36 +64,36 @@
     _delegate = delegate;
 }
 
-- (void)performScanning
+- (void)setAttachedViewController:(UIViewController *)fvc
 {
-    [_centralMgr scanForPeripheralsWithServices:nil
-                                            options:@{ CBCentralManagerScanOptionAllowDuplicatesKey : @0 }];
+    _attachedViewController = fvc;
 }
+
 
 /*
  * 开始扫描外设
  */
 - (void)scan
 {
-    [self performScanning];
+    while(!_isPrepare){
+        [NSThread sleepForTimeInterval:0.5];
+    }
     
-    NSLog(@"Scanning started");
+    [_centralMgr scanForPeripheralsWithServices:nil
+                                        options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
     
-    _listView = [[PeripheralListViewController alloc] init];
+    NSLog(@"开始扫描");
     
-    UIViewController *rootViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
-    [rootViewController presentViewController:_listView animated:YES completion:^{
-        NSLog(@"Show Peripheral List");
-    }];
+    _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"ROOM"];
+    _peripheralListView.delegate = self;
     
-    //注册连接事件
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(connect:) name:CONNECTNOTF object:nil];
+    [_peripheralListView showTableView:_attachedViewController animated:YES];
 }
 
 /*
  * 取消扫描
  */
-- (void)cancel
+- (void)stopScanning
 {
     //清空外设列表
     _allPeripherals = nil;
@@ -98,8 +102,7 @@
     if (_centralMgr.isScanning) {
         [_centralMgr stopScan];
     }
-    
-    [_listView dismissModalViewControllerAnimated:YES];
+    NSLog(@"停止扫描");
 }
 
 - (void)sendData:(NSData *)message
@@ -112,14 +115,12 @@
         }
     }else{
         //还没轮到自己出牌
-        ALERT(@"错误", @"还没轮到你出");
+        ALERT(_attachedViewController, @"错误", @"还没轮到你出");
     }
 }
 
-- (void)connect:(NSNotification*)notification
+- (void)connect:(NSIndexPath *)indexPath
 {
-    NSDictionary *userinfo =  notification.userInfo;
-    NSIndexPath *indexPath = [userinfo objectForKey:NOTIFICATIONKEY];
     
     _currentPeripheral = [_allPeripherals objectAtIndex:indexPath.row];
     [_centralMgr connectPeripheral:_currentPeripheral options:nil];
@@ -148,8 +149,6 @@
     }// If we've got this far, we're connected, but we're not subscribed, so we just disconnect
     [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     
-    //移除连接事件
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:CONNECTNOTF object:nil];
 }
 
 #pragma mark - CBCentralManager Delegate
@@ -158,25 +157,28 @@
  */
 - (void) centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
-    // Reject any where the value is above reasonable range
-    if (RSSI.integerValue > -15) {
+    NSLog(@"发现设备");
+
+    if (RSSI.integerValue > -15 || RSSI.integerValue < -95) {
         return;
     }
-    
-    // Reject if the signal strength is too low to be close enough (Close is around -22dB)
-    if (RSSI.integerValue < -95) {
+    if ([peripheral.name length] == 0) {
         return;
     }
-    
     //将相关数据添加到数组
+    if ([_allPeripherals containsObject:peripheral]) {
+        return;
+    }
+    
     showData data;
-    strcpy(data.name, [peripheral.name cStringUsingEncoding:NSUTF8StringEncoding]);
-    data.percentage = RSSI.integerValue / 22.0;
+    char *name = [peripheral.name cStringUsingEncoding:NSUTF8StringEncoding];
+    strcpy(data.name, strlen(name)>0?name:"UnKnown");
+    data.percentage = (RSSI.integerValue + 95.) / 80;
     NSValue *dataValue = [NSValue valueWithBytes:&data objCType:@encode(showData)];
     [_allPeripherals addObject:peripheral];
     
     //更新外设列表
-    [_listView UpdatePeripheralList:dataValue];
+    [_peripheralListView UpdatePeripheralList:dataValue];
 }
 
 /*
@@ -184,7 +186,7 @@
  */
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    ALERT(@"连接失败", error.localizedDescription);
+    ALERT(_attachedViewController, @"连接失败", error.localizedDescription);
     [self cleanup];
 }
 
@@ -194,7 +196,7 @@
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
     NSLog(@"连接外设成功");
-    [self cancel];
+    [self stopScanning];
     
     //设置代理
     peripheral.delegate = self;
@@ -208,11 +210,8 @@
  */
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    NSLog(@"Peripheral Disconnected");
+    NSLog(@"蓝牙断开");
     _currentPeripheral = nil;
-    
-    //蓝牙断开通知
-    [[NSNotificationCenter defaultCenter] postNotificationName:DISCONNECTNOTF object:nil];
 }
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
@@ -221,8 +220,8 @@
         // In a real app, you'd deal with all the states correctly
         return;
     }
-    
-    // The state must be CBCentralManagerStatePoweredOn...
+    NSLog(@"蓝牙准备好扫描");
+    _isPrepare = YES;
 }
 
 #pragma mark - peripheral delegate
@@ -232,7 +231,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
 {
     if (error) {
-        ALERT(@"搜索服务失败", (@"Error discovering services: %@", [error localizedDescription]));
+        ALERT(_attachedViewController, @"搜索服务失败", [error localizedDescription]);
         [self cleanup];
         return;
     }
@@ -249,7 +248,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error
 {
     if (error) {
-        ALERT(@"探索特性失败", (@"Error discovering characteristics: %@", [error localizedDescription]));
+        ALERT(_attachedViewController, @"探索特性失败", [error localizedDescription]);
         [self cleanup];
         return;
     }
@@ -281,7 +280,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error) {
-        ALERT(@"接受数据失败", [error localizedDescription]);
+        ALERT(_attachedViewController, @"接受数据失败", [error localizedDescription]);
         return;
     }
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){

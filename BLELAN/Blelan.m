@@ -21,8 +21,8 @@
 
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
 @property (nonatomic, strong) CPeripheral<PeripheralDelegate>    *peripheral;
-@property (nonatomic, strong) id<BlelanDelegate>                        delegate;
-
+@property (nonatomic, strong) id<BlelanDelegate>                    delegate;
+@property (nonatomic,   weak) UIViewController  *attachedVc;
 @end
 
 
@@ -37,21 +37,26 @@
  *
  *  @param name 指定设备名称
  *
+ *  @param vc 父视图
+ *
  *  @param isStrategy 游戏类型，竞技或策略。策略类的话需要维护调度中心，竞技类则不用。
  *
  *  @return LightAir实例
  */
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name mode:(BOOL)isStrategy
+- (instancetype)initWithType:(LightAirType)type name:(NSString*)name attached:(UIViewController *)vc mode:(BOOL)isStrategy
 {
     self = [super init];
     if (self) {
         if (type == PeripheralType) {
             _peripheral = [[CPeripheral alloc] initWithName:name mode:isStrategy];
+            [_peripheral setAttachedViewController:vc];
             isCentral = NO;
         }else{
             _central = [[CCentral alloc] initWithName:name mode:isStrategy];
+            [_central setAttachedViewController:vc];
             isCentral = YES;
         }
+        _attachedVc = vc;
     }
     return self;
 }
@@ -66,14 +71,6 @@
     }
 }
 
-- (void)setParentController:(UIViewController *)fvc
-{
-    if (isCentral) {
-        
-    }else{
-        [_peripheral setParentViewController:fvc];
-    }
-}
 /**
 *  发送数据
 *
@@ -102,7 +99,7 @@
     if(!isCentral){
         [_peripheral startAdvertising];
     }else{
-        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
@@ -111,19 +108,19 @@
     if(!isCentral){
         [_peripheral startRoom];
     }else{
-        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
 /**
- *  停止设备动作，如果为外设则停止广播，如果为中心则停止扫描
+ *  外设停止广播
  */
 - (void)closeRoom
 {
     if(!isCentral){
         [_peripheral stopAdvertising];
     }else{
-        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能关闭房间");
+        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能关闭房间");
     }
 }
 
@@ -133,16 +130,16 @@
     if(isCentral){
         [_central scan];
     }else{
-        ALERT(@"设备类型错误", @"设备只有作为中心启动时才能扫描房间");
+        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为中心启动时才能扫描房间");
     }
 }
 
 - (void)leaveRoom
 {
     if(isCentral){
-        [_central cancel];
+        [_central leanRoom];
     }else{
-        ALERT(@"设备类型错误", @"设备只有作为中心启动时才能离开房间");
+        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为中心启动时才能离开房间");
     }
 }
 

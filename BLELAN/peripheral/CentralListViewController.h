@@ -7,8 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "../peripheral/CPeripheral.h"
 
 @interface CentralListViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
+
+@property (nonatomic,   weak) id<myPeripheralDelegate> delegate;
+
 
 - (id)initWithTitle:(NSString *)aTitle;
 

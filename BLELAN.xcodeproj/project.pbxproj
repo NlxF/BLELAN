@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		572DD3371C51CE91007368E6 /* comm.h in Headers */ = {isa = PBXBuildFile; fileRef = 57CEABAA1C4E2C790064B3AB /* comm.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		575530A51C5B6C4B002FD82B /* high.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A21C5B6C4B002FD82B /* high.png */; };
+		575530A61C5B6C4B002FD82B /* low.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A31C5B6C4B002FD82B /* low.png */; };
+		575530A71C5B6C4B002FD82B /* middle.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A41C5B6C4B002FD82B /* middle.png */; };
 		5766150C1C5A096A0026377D /* CentralListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 576615061C5A096A0026377D /* CentralListView.h */; };
 		5766150D1C5A096A0026377D /* CentralListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 576615071C5A096A0026377D /* CentralListView.m */; };
 		5766150E1C5A096A0026377D /* CentralListViewCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 576615081C5A096A0026377D /* CentralListViewCell.h */; };
@@ -41,6 +44,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		575530A21C5B6C4B002FD82B /* high.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = high.png; path = BLELAN/pic/high.png; sourceTree = "<group>"; };
+		575530A31C5B6C4B002FD82B /* low.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = low.png; path = BLELAN/pic/low.png; sourceTree = "<group>"; };
+		575530A41C5B6C4B002FD82B /* middle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = middle.png; path = BLELAN/pic/middle.png; sourceTree = "<group>"; };
 		576615061C5A096A0026377D /* CentralListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CentralListView.h; path = peripheral/CentralListView.h; sourceTree = "<group>"; };
 		576615071C5A096A0026377D /* CentralListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CentralListView.m; path = peripheral/CentralListView.m; sourceTree = "<group>"; };
 		576615081C5A096A0026377D /* CentralListViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CentralListViewCell.h; path = peripheral/CentralListViewCell.h; sourceTree = "<group>"; };
@@ -101,9 +107,20 @@
 			name = UI;
 			sourceTree = "<group>";
 		};
+		575530A11C5B6C1C002FD82B /* PIC */ = {
+			isa = PBXGroup;
+			children = (
+				575530A21C5B6C4B002FD82B /* high.png */,
+				575530A31C5B6C4B002FD82B /* low.png */,
+				575530A41C5B6C4B002FD82B /* middle.png */,
+			);
+			name = PIC;
+			sourceTree = "<group>";
+		};
 		57A6E3711C48E7DA00902F01 = {
 			isa = PBXGroup;
 			children = (
+				575530A11C5B6C1C002FD82B /* PIC */,
 				57A6E37D1C48E7DA00902F01 /* BLELAN */,
 				57A6E37C1C48E7DA00902F01 /* Products */,
 				7A9D0A811C49E1EB006F1F71 /* Framework */,
@@ -281,6 +298,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				575530A71C5B6C4B002FD82B /* middle.png in Resources */,
+				575530A61C5B6C4B002FD82B /* low.png in Resources */,
+				575530A51C5B6C4B002FD82B /* high.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

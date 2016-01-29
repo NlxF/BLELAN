@@ -13,41 +13,24 @@
 #import "../Constants.h"
 
 
-static NSString *cellIdentity = @"PopListViewCell";
+static NSString *centralCellIdentity = @"CentralListView";
 
 @interface CentralListViewController ()
 
 @property (nonatomic, strong) NSMutableArray *centralList;
 @property (nonatomic, strong) UITableView  *myCentralTable;
+@property (nonatomic, strong) UIView       *titleView;
 @property (nonatomic, strong) NSString     *tableTitle;
+
 @end
 
 @implementation CentralListViewController
 
-- (CGRect)tableRect
-{
-    CGRect deviceRect = [self deviceRect];
-    CGRect tableRect = CGRectMake((deviceRect.size.width - CENTRALTABLEVIEWWITH) / 2,
-                                  (deviceRect.size.height- CENTRALTABLEVIEWHEIGHT + CENTRALTABLEVIEW_HEADER_HEIGHT) / 2,
-                                  CENTRALTABLEVIEWWITH,
-                                  CENTRALTABLEVIEWHEIGHT);
-    return tableRect;
-}
-
-- (CGRect)deviceRect
-{
-    //获取当前设备的状态
-    CGRect rect = [[UIScreen mainScreen] bounds];
-//    if (UIInterfaceOrientationIsLandscape([[UIApplication sharedApplication] statusBarOrientation])) {
-//        //rect.size = CGSizeMake(rect.size.height, rect.size.width);
-//    }
-    return rect;
-}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.view = [[CentralListView alloc] initWithFrame:[self deviceRect]
+    self.view = [[CentralListView alloc] initWithFrame:[Helper deviceRect]
                                                  style:UITableViewStylePlain
                                                  title:_tableTitle];
     self.view.alpha = 0.1;
@@ -60,21 +43,17 @@ static NSString *cellIdentity = @"PopListViewCell";
     // Dispose of any resources that can be recreated.
 }
 
-- (void)viewWillAppear:(BOOL)animated
-{
-    
-}
 
 - (id)initWithTitle:(NSString *)aTitle
 {
     if (self = [super init]) {
         _tableTitle = aTitle;
-        _myCentralTable = [[UITableView alloc] initWithFrame:[self tableRect]
+        _myCentralTable = [[UITableView alloc] initWithFrame:[Helper tableRect]
                                                        style:UITableViewStylePlain];
         
         _myCentralTable.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
         _myCentralTable.backgroundColor = [UIColor clearColor];
-        [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:cellIdentity];
+        [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:centralCellIdentity];
         _myCentralTable.delegate = self;
         _myCentralTable.dataSource = self;
         [self.view addSubview:_myCentralTable];
@@ -92,32 +71,10 @@ static NSString *cellIdentity = @"PopListViewCell";
 }
 
 #pragma mark - custom methods
-- (void)fadeIn {
-    self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
-    self.view.alpha = 0;
-    [UIView animateWithDuration:.35 animations:^{
-        self.view.alpha = 1;
-        self.view.transform = CGAffineTransformMakeScale(1, 1);
-    }];
-    
-}
-
-- (void)fadeOut {
-    [UIView animateWithDuration:.35 animations:^{
-        self.view.transform = CGAffineTransformMakeScale(1.3, 1.3);
-        self.view.alpha = 0.0;
-    } completion:^(BOOL finished) {
-        if (finished) {
-            [[NSNotificationCenter defaultCenter] removeObserver:self];
-            [self.view removeFromSuperview];
-        }
-    }];
-}
-
 - (void)orientationDidChange:(NSNotification *)not
 {
-    [self.view setFrame:[self deviceRect]];
-    [self.myCentralTable setFrame:[self tableRect]];
+    [self.view setFrame:[Helper deviceRect]];
+    [self.myCentralTable setFrame:[Helper tableRect]];
     [self.view setNeedsDisplay];
 }
 
@@ -141,14 +98,24 @@ static NSString *cellIdentity = @"PopListViewCell";
     [fView.view addSubview:self.view];
     [fView addChildViewController:self];
     if (animated) {
-        [self fadeIn];
+        [Helper fadeIn:self.view];
     }
 }
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    CGPoint point = [touch locationInView:self.view];
+    if(CGRectContainsPoint([Helper titleRect], point))
+        return;
     
     // dismiss self
-    [self fadeOut];
+    [Helper fadeOut:self.view];
+    
+    //stop advertising
+    if ([_delegate respondsToSelector:@selector(stopAdvertising)]) {
+        [self.delegate stopAdvertising];
+    }
 }
 
 #pragma mark - Table view data source
@@ -164,10 +131,10 @@ static NSString *cellIdentity = @"PopListViewCell";
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:cellIdentity forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:centralCellIdentity forIndexPath:indexPath];
     if (cell == nil) {
         //reuse cell
-        cell = [(UITableViewCell *)[CentralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentity];
+        cell = [(UITableViewCell *)[CentralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:centralCellIdentity];
     }
     cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
     

@@ -31,8 +31,6 @@
 		7A9D0A881C4A3DBB006F1F71 /* Constants.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A871C4A3DBB006F1F71 /* Constants.h */; };
 		7A9D0A931C4A9515006F1F71 /* PeripheralListViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A911C4A9515006F1F71 /* PeripheralListViewController.h */; };
 		7A9D0A941C4A9515006F1F71 /* PeripheralListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A921C4A9515006F1F71 /* PeripheralListViewController.m */; };
-		7A9D0A981C4AA026006F1F71 /* TableViewCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A961C4AA026006F1F71 /* TableViewCell.h */; };
-		7A9D0A991C4AA026006F1F71 /* TableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A971C4AA026006F1F71 /* TableViewCell.m */; };
 		7A9D0A9E1C4B6835006F1F71 /* helper.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A9C1C4B6835006F1F71 /* helper.h */; };
 		7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A9D1C4B6835006F1F71 /* helper.m */; };
 		7A9D0AA21C4B9577006F1F71 /* Payload.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0AA01C4B9577006F1F71 /* Payload.h */; };
@@ -69,8 +67,6 @@
 		7A9D0A871C4A3DBB006F1F71 /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
 		7A9D0A911C4A9515006F1F71 /* PeripheralListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PeripheralListViewController.h; path = central/PeripheralListViewController.h; sourceTree = "<group>"; };
 		7A9D0A921C4A9515006F1F71 /* PeripheralListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PeripheralListViewController.m; path = central/PeripheralListViewController.m; sourceTree = "<group>"; };
-		7A9D0A961C4AA026006F1F71 /* TableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TableViewCell.h; path = central/TableViewCell.h; sourceTree = "<group>"; };
-		7A9D0A971C4AA026006F1F71 /* TableViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TableViewCell.m; path = central/TableViewCell.m; sourceTree = "<group>"; };
 		7A9D0A9C1C4B6835006F1F71 /* helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = helper.h; path = utility/helper.h; sourceTree = "<group>"; };
 		7A9D0A9D1C4B6835006F1F71 /* helper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = helper.m; path = utility/helper.m; sourceTree = "<group>"; };
 		7A9D0AA01C4B9577006F1F71 /* Payload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Payload.h; path = model/Payload.h; sourceTree = "<group>"; };
@@ -200,8 +196,6 @@
 				7AD706A61C5A66AE00645F61 /* PeripheralListViewCell.m */,
 				7A9D0A911C4A9515006F1F71 /* PeripheralListViewController.h */,
 				7A9D0A921C4A9515006F1F71 /* PeripheralListViewController.m */,
-				7A9D0A961C4AA026006F1F71 /* TableViewCell.h */,
-				7A9D0A971C4AA026006F1F71 /* TableViewCell.m */,
 			);
 			name = UI;
 			sourceTree = "<group>";
@@ -224,7 +218,6 @@
 			files = (
 				5766150C1C5A096A0026377D /* CentralListView.h in Headers */,
 				7AD706A71C5A66AE00645F61 /* PeripheralListView.h in Headers */,
-				7A9D0A981C4AA026006F1F71 /* TableViewCell.h in Headers */,
 				572DD3371C51CE91007368E6 /* comm.h in Headers */,
 				7A9D0A7D1C49DEC7006F1F71 /* CCentral.h in Headers */,
 				7A9D0A791C49DE8F006F1F71 /* CPeripheral.h in Headers */,
@@ -322,7 +315,6 @@
 				7AD706AA1C5A66AE00645F61 /* PeripheralListViewCell.m in Sources */,
 				7AD706A81C5A66AE00645F61 /* PeripheralListView.m in Sources */,
 				7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */,
-				7A9D0A991C4AA026006F1F71 /* TableViewCell.m in Sources */,
 				5766150F1C5A096A0026377D /* CentralListViewCell.m in Sources */,
 				7A9D0A7A1C49DE8F006F1F71 /* CPeripheral.m in Sources */,
 			);

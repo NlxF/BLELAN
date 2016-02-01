@@ -9,29 +9,26 @@
 #import "CentralManager.h"
 
 @interface CentralManager()
-
-@property (nonatomic, strong) NSMutableArray *centralName;        //中心设备名。
-@property (nonatomic, strong) NSMutableArray *centralList;        //代表中心设备的CBCentral对象
-
 @end
+
 
 @implementation CentralManager
 
 #pragma mark - attributes methods
 - (NSMutableArray *)centralName
 {
-    if (_centralName == nil) {
-        _centralName = [[NSMutableArray alloc] init];
+    if (_centralsName == nil) {
+        _centralsName = [[NSMutableArray alloc] init];
     }
-    return _centralName;
+    return _centralsName;
 }
 
 - (NSMutableArray *)centralList
 {
-    if (_centralList == nil) {
-        _centralList = [[NSMutableArray alloc] init];
+    if (_centralsList == nil) {
+        _centralsList = [[NSMutableArray alloc] init];
     }
-    return _centralList;
+    return _centralsList;
 }
 
 #pragma mark - custome methods
@@ -45,13 +42,11 @@
     
 }
 
-- (void)removeCentral:(CBCentral *)device orName:(NSString *)centralName
+- (void)removeCentral:(CBCentral *)device
 {
     NSUInteger idx = -1;
     
-    if (centralName != nil) {
-        idx = [self.centralName indexOfObject:centralName];
-    }else if(device != nil){
+    if(device != nil && [self.centralsList containsObject:device]){
         idx = [self.centralList indexOfObject:device];
     }
     
@@ -61,15 +56,6 @@
     }
 }
 
-- (NSArray *)centralsNameList
-{
-    return (NSArray *)_centralName;
-}
-
-- (NSArray *)currentCentrals
-{
-    return (NSArray *)_centralList;
-}
 
 - (CBCentral *)getCentralByIndex:(NSUInteger)index
 {

@@ -12,7 +12,11 @@
 
 @protocol myPeripheralDelegate <NSObject>
 
-- (void)stopAdvertising;
+- (void)exchangePosition:(NSUInteger)from to:(NSUInteger)to;
+
+- (void)startRoom;
+
+- (void)closeRoom;
 
 @end
 
@@ -20,17 +24,19 @@
 
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
-- (void)startAdvertising;
+- (void)startAdvertising:(NSString *)roomName;
+
+- (void)stopAdvertising;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 - (void)setAttachedViewController:(UIViewController *)fvc;
 
-- (void)startRoom;
-
-- (void)forwardMessage:(NSData *)mesage;
+- (void)dispatchMessage:(NSData *)mesage;
 
 - (void)sendData:(NSData *)data;
+
+- (void)cleanCentralMgr;
 
 - (NSArray *)deviceList;
 

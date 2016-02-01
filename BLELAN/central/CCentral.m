@@ -20,14 +20,14 @@
     NSUInteger selfIndex;
 }
 
-@property (strong, nonatomic) id<BlelanDelegate              > delegate;
+@property (strong, nonatomic) id<BlelanDelegate>           delegate;
 @property (strong, nonatomic) CBCentralManager             *centralMgr;
 @property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
-@property (strong, nonatomic) CBCharacteristic           *gameCharacteristic;
+@property (strong, nonatomic) CBCharacteristic             *gameCharacteristic;
 @property (strong, nonatomic) NSMutableArray               *allPeripherals;
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 @property (strong, nonatomic) NSString                     *centralName;
-@property (nonatomic,   weak) UIViewController *attachedViewController;
+@property (nonatomic,   weak) UIViewController             *attachedViewController;
 @property (nonatomic, assign) BOOL                         isStrategy;
 @property (nonatomic, assign) BOOL                         isPrepare;
 @end
@@ -84,10 +84,11 @@
     
     NSLog(@"开始扫描");
     
-    _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"ROOM"];
-    _peripheralListView.delegate = self;
-    
-    [_peripheralListView showTableView:_attachedViewController animated:YES];
+    if (_peripheralListView == nil) {
+        _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索..."];
+        _peripheralListView.delegate = self;
+        [_peripheralListView showTableView:_attachedViewController animated:YES];
+    }
 }
 
 /*
@@ -97,6 +98,7 @@
 {
     //清空外设列表
     _allPeripherals = nil;
+    _peripheralListView.peripheralsList = nil;
     
     //停止扫描
     if (_centralMgr.isScanning) {
@@ -119,36 +121,42 @@
     }
 }
 
-- (void)connect:(NSIndexPath *)indexPath
-{
-    
-    _currentPeripheral = [_allPeripherals objectAtIndex:indexPath.row];
-    [_centralMgr connectPeripheral:_currentPeripheral options:nil];
-    
-    NSLog(@"连接外设 %@", _currentPeripheral.name);
-}
-
-
 /*
  * Call this when things either go wrong, or you're done with the connection.
  */
 - (void)cleanup
 {
-    // See if we are subscribed to a characteristic on the peripheral
-    if (_currentPeripheral.services != nil) {
-        for (CBService *service in _currentPeripheral.services) {
-            if (service.characteristics != nil) {
-                for (CBCharacteristic *characteristic in service.characteristics) {
-                    if (characteristic.isNotifying) {
-                        // It is notifying, so unsubscribe
-                        [_currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
-                    }
+    for (CBService *service in _currentPeripheral.services) {
+        if (service.characteristics != nil) {
+            for (CBCharacteristic *characteristic in service.characteristics) {
+                if (characteristic.isNotifying) {
+                    // It is notifying, so unsubscribe
+                    [_currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
                 }
             }
         }
-    }// If we've got this far, we're connected, but we're not subscribed, so we just disconnect
+    }
+    _currentPeripheral = nil;
+}
+
+#pragma mark - myCentralDelegate
+- (void)joinRoom:(NSUInteger)row
+{
+    _currentPeripheral = [_allPeripherals objectAtIndex:row];
+    [_centralMgr connectPeripheral:_currentPeripheral options:nil];
+    
+    NSLog(@"连接外设 %@", _currentPeripheral.name);
+    
+    [self stopScanning];
+}
+
+- (void)leaveRoom
+{
     [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     
+    [self cleanup];
+    
+    [self scan];
 }
 
 #pragma mark - CBCentralManager Delegate
@@ -287,11 +295,14 @@
     NSLog(@"接收到数据");
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
-        NSArray *deviceList = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
-        selfIndex = [deviceList indexOfObject:_centralName];
-        [_delegate deviceList:deviceList error:nil];
+        NSArray *recvData = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
+        NSNumber *num = [recvData objectAtIndex:0];
+        selfIndex = num.intValue;
+        NSArray *deviceList = [recvData subarrayWithRange:NSMakeRange(1, recvData.count-1)];
+        
         //发起开始通知
-        [[NSNotificationCenter defaultCenter] postNotificationName:CENTRALSTART object:nil];
+        [_delegate deviceList:deviceList error:nil];
+        
         //获取列表后取消订阅
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
         //房主先出牌

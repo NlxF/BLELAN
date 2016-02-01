@@ -92,10 +92,10 @@
  *  启动设备，作为外设开启广播
  *
  */
-- (void)createRoom
+- (void)createRoom:(NSString *)roomName
 {
     if(!isCentral){
-        [_peripheral startAdvertising];
+        [_peripheral startAdvertising:roomName];
     }else{
         ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
@@ -135,10 +135,9 @@
 - (void)leaveRoom
 {
     if(isCentral){
-        [_central leanRoom];
+        [_central leaveRoom];
     }else{
         ALERT(_attachedVc, @"设备类型错误", @"设备只有作为中心启动时才能离开房间");
     }
 }
-
 @end

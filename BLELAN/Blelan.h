@@ -22,10 +22,22 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 @protocol BlelanDelegate <NSObject>
 
 @optional
+
 - (void)recvData:(NSData *)data;
 
-- (void)deviceList:(NSArray *)list error:(NSError*)error;
+/**
+ *  player列表，外设+中心，当收到此消息时表示房间已开始
+ *
+ *  @param list  设备名列表，索引从1开始
+ *  @param error 是否出错
+ */
+- (void)deviceList:(NSArray<NSString*> *)playerList error:(NSError*)error;
 
+/**
+ *  当为策略类型时，返回当前操作者索引，基于playerList
+ *
+ *  @param idx 索引
+ */
 - (void)UpdateScheduleIndex:(NSUInteger)idx;
 
 @end
@@ -46,7 +58,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 /***************************peripheral*********************************/
-- (void)createRoom;
+- (void)createRoom:(NSString *)roomName;
 
 - (void)startRoom;
 

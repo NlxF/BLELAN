@@ -13,6 +13,9 @@
 
 @property (nonatomic, weak) id<myCentralDelegate>  delegate;
 
+@property (nonatomic, strong) NSMutableArray       *peripheralsList;
+
+
 - (id)initWithTitle:(NSString *)aTitle;
 
 - (void)UpdatePeripheralList:(NSValue *)peripheralName;

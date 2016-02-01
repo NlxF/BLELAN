@@ -104,7 +104,7 @@ static NSString *centralCellIdentity = @"CentralListView";
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.myCentralTable beginUpdates];
         NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.centralList count]-1 inSection:0]];
-        [self.myCentralTable insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
+        [self.myCentralTable insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationLeft];
         [self.myCentralTable endUpdates];
     });
 }
@@ -128,9 +128,9 @@ static NSString *centralCellIdentity = @"CentralListView";
     // dismiss self
     [Helper fadeOut:self.view];
     
-    //stop advertising
-    if ([_delegate respondsToSelector:@selector(stopAdvertising)]) {
-        [self.delegate stopAdvertising];
+    //close room
+    if ([_delegate respondsToSelector:@selector(closeRoom)]) {
+        [self.delegate closeRoom];
     }
 }
 
@@ -139,9 +139,9 @@ static NSString *centralCellIdentity = @"CentralListView";
     // dismiss self
     [Helper fadeOut:self.view];
     
-    //stop advertising
-    if ([_delegate respondsToSelector:@selector(stopAdvertising)]) {
-        [self.delegate stopAdvertising];
+    //start room
+    if ([_delegate respondsToSelector:@selector(startRoom)]) {
+        [self.delegate startRoom];
     }
 }
 
@@ -155,8 +155,8 @@ static NSString *centralCellIdentity = @"CentralListView";
         [_topRight setTitle:@"结束" forState:UIControlStateNormal];
     }
 }
-#pragma mark - Table view data source
 
+#pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
@@ -188,6 +188,8 @@ static NSString *centralCellIdentity = @"CentralListView";
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
     NSLog(@"move from row %ld to row %ld", fromIndexPath.row, toIndexPath.row);
     [self.centralList exchangeObjectAtIndex:fromIndexPath.row withObjectAtIndex:toIndexPath.row];
+    //交换中心设备在管理器中的位置
+    [_delegate exchangePosition:fromIndexPath.row to:toIndexPath.row];
 }
 
 // 是否能编辑cell.
@@ -196,10 +198,6 @@ static NSString *centralCellIdentity = @"CentralListView";
     return YES;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return @"踢掉";
-}
 
 #pragma mark - table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
@@ -210,6 +208,11 @@ static NSString *centralCellIdentity = @"CentralListView";
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     return 30.;
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return @"踢掉";
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath

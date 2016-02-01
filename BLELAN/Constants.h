@@ -43,9 +43,9 @@ typedef unsigned char                   UInt8;
 //#define NOTIFICATIONKEY           @"IDX"
 
 /*外设开始通知*/
-#define PERIPHERALSTART           @"peripheralStart"
+//#define PERIPHERALSTART           @"peripheralStart"
 /*中心开始通知*/
-#define CENTRALSTART              @"centralStart"
+//#define CENTRALSTART              @"centralStart"
 
 
 /*表示信号强弱的图名*/
@@ -56,7 +56,7 @@ typedef unsigned char                   UInt8;
 /*外设提供的服务的UUID*/
 //广播频道服务的UUID
 #define   SERVICEBROADCASTUUID                @"17193E0C-1D26-4771-8422-6E00D9257FAC"
-//广播频道服务的特性的UUID
+//游戏特性的UUID
 #define   BROADCASTCHARACTERUUID          @"F967DF0B-88A0-4E55-9EDA-E2C6DC6CE886"
 //设备名特性的UUID
 #define   BROADCASTNAMECHARACTERUUID      @"5558878B-FF99-49FC-87F1-6ED86678D218"

@@ -17,10 +17,16 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @interface PeripheralListViewController ()
 
-@property (nonatomic, strong) NSMutableArray   *peripheralsList;
+@property (nonatomic, assign) NSInteger          currentRow;
+
 @property (nonatomic, strong) UITableView        *peripheralTableView;
 
-@property (nonatomic, strong) NSString     *tableTitle;
+@property (nonatomic, strong) NSString           *tableTitle;
+
+@property (nonatomic, strong) UIButton           *leftBtn;
+
+@property (nonatomic, strong) UIButton           *rightBtn;
+
 @end
 
 @implementation PeripheralListViewController
@@ -28,12 +34,25 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.view = [[PeripheralListView alloc] initWithFrame:[Helper deviceRect]
+    self.view = [[PeripheralListView alloc] initWithFrame:[Helper tableRect]
                                                  style:UITableViewStylePlain
                                                  title:_tableTitle];
     self.view.alpha = 0.1;
     self.view.backgroundColor = [UIColor clearColor];
     
+    //add left button
+    _leftBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    _leftBtn.frame = [Helper leftButton];
+    [_leftBtn setTitle:@"加入" forState:UIControlStateNormal];
+    [_leftBtn addTarget:self action:@selector(joinRoom) forControlEvents:UIControlEventTouchDown];
+    [self.view addSubview:_leftBtn];
+    
+    _rightBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    _rightBtn.frame = [Helper rightButton];
+    [_rightBtn setTitle:@"离开" forState:UIControlStateNormal];
+    [_rightBtn setEnabled:NO];
+    [_rightBtn addTarget:self action:@selector(leaveRoom) forControlEvents:UIControlEventTouchDown];
+    [self.view addSubview:_rightBtn];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -81,7 +100,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         [self.peripheralsList addObject:name];
         [self.peripheralTableView beginUpdates];
         NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
-        [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
+        [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationLeft];
         [self.peripheralTableView endUpdates];
     });
 }
@@ -100,23 +119,39 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     }
 }
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+- (void)joinRoom
 {
-    UITouch *touch = [touches anyObject];
-    CGPoint point = [touch locationInView:self.view];
-    if(CGRectContainsPoint([Helper titleRect], point))
-        return;
-    
-    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
-        [_delegate stopScanning];
+    if (_currentRow >= 0) {
+        [_delegate joinRoom:_currentRow];
     }
-    
-    // dismiss self
-    [Helper fadeOut:self.view];
+    [_leftBtn setEnabled:NO];
+    [_rightBtn setEnabled:YES];
 }
 
-#pragma mark - Table view data source
+- (void)leaveRoom
+{
+    [_delegate leaveRoom];
+    
+    [_leftBtn setEnabled:YES];
+    [_rightBtn setEnabled:NO];
+}
 
+//- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+//{
+//    UITouch *touch = [touches anyObject];
+//    CGPoint point = [touch locationInView:self.view];
+//    if(CGRectContainsPoint([Helper titleRect], point))
+//        return;
+//    
+//    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
+//        [_delegate stopScanning];
+//    }
+//    
+//    // dismiss self
+//    [Helper fadeOut:self.view];
+//}
+
+#pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
@@ -142,38 +177,31 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     return cell;
 }
 
-
-
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 30.;
 }
 
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    
-}
+//// Override to support conditional editing of the table view.
+//- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
+//    // Return NO if you do not want the specified item to be editable.
+//    return YES;
+//}
+//
+//// Override to support rearranging the table view.
+//- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
+//    
+//}
+
 #pragma mark - table view delegate
-
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([_delegate respondsToSelector:@selector(connect:)]) {
-        [_delegate connect:indexPath];
-    }
-    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
-        [_delegate stopScanning];
-    }
+    _currentRow = indexPath.row;
 }
 
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
+- (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    _currentRow = -1;
 }
-*/
 
 @end

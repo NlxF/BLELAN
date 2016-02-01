@@ -11,13 +11,15 @@
 
 @interface CentralManager : NSObject
 
+@property (nonatomic, strong) NSMutableArray<NSString *> *centralsName;        //中心设备名。
+
+@property (nonatomic, strong) NSMutableArray<CBCentral*> *centralsList;        //代表中心设备的CBCentral对象
+
+
 - (void)addCentral:(CBCentral *)device name:(NSString *)centralName;
 
-- (void)removeCentral:(CBCentral *)device orName:(NSString *)name;
-
-- (NSArray *)centralsNameList;
-
-- (NSArray *)currentCentrals;
+- (void)removeCentral:(CBCentral *)device;
 
 - (CBCentral *)getCentralByIndex:(NSUInteger)index;
+
 @end

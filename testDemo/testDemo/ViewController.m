@@ -44,7 +44,7 @@
         _ligjtair = [[LightLAN alloc] initWithType:PeripheralType name:@"ROOM-1" attached:self mode:YES];
     }
     
-    [_ligjtair createRoom];
+    [_ligjtair createRoom:@"ROOM-1"];
 }
 
 - (void)startAsCentral

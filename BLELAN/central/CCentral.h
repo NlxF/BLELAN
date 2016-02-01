@@ -12,9 +12,9 @@
 
 @protocol myCentralDelegate <NSObject>
 
-- (void)connect:(NSIndexPath *)path;
+- (void)joinRoom:(NSUInteger)row;
 
-- (void)stopScanning;
+- (void)leaveRoom;
 
 @end
 
@@ -24,7 +24,7 @@
 
 - (void)scan;
 
-- (void)leanRoom;
+- (void)stopScanning;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 

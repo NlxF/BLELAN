@@ -89,7 +89,7 @@
     topRight.size.height = 20;
     topRight.origin.x += CENTRALTABLEVIEWWITH;
     topRight.origin.x -= topRight.size.width;
-    topRight.origin.x -= 0.5;   //距左
+    //topRight.origin.x -= 20;   //距左
     topRight.origin.y += (CENTRALTABLEVIEW_HEADER_HEIGHT - topRight.size.height) / 2.;
     
     return topRight;

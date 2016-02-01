@@ -61,13 +61,13 @@
     return self;
 }
 
-- (void)startAdvertising
+- (void)startAdvertising:(NSString *)roomName
 {
     while (!_isPrepare) {
         [NSThread sleepForTimeInterval:0.5];
     }
     
-    [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: _peripheralName,
+    [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: roomName,
                                             CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                             ]}];
     
@@ -80,7 +80,6 @@
         NSLog(@"显示连接设备列表");
     });
 }
-
 
 - (void)stopAdvertising
 {
@@ -120,53 +119,85 @@
     NSMutableArray *arr = [[NSMutableArray alloc] init];
     
     //设备列表，索引从1开始。
-    [arr addObject:[NSNull null]];
+    [arr addObject:@"NULL"];
     [arr addObject:_peripheralName];
-    [arr addObjectsFromArray:[_centralsMgr centralsNameList]];
+    [arr addObjectsFromArray:_centralsMgr.centralsName];
+    
     //玩家数量
     playerNums = [arr count] - 1;
     
     return (NSArray*)arr;
 }
 
-- (void)startRoom
-{
-    //停止广播
-    [self stopAdvertising];
-    
-    [_delegate deviceList:[self deviceList] error:nil];
-    
-    //房主首先出牌
-    currentPlayer = 1;
-    
-    //将设备列表广播出去
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:[self deviceList]];
-    [_peripheralMgr updateValue:data forCharacteristic:_nameCharacteristic
-               onSubscribedCentrals:[_centralsMgr currentCentrals]];
-    
-    //发起开始通知
-    [[NSNotificationCenter defaultCenter] postNotificationName:PERIPHERALSTART object:nil];
-}
-
-- (void)forwardMessage:(NSData *)mesage
+- (void)dispatchMessage:(NSData *)mesage
 {
     //将收到的数据转播出去
     FrameType gameType    = MakeGameFrame;
     for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:1 type:gameType]) {
-        [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:[_centralsMgr currentCentrals]];
+        [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
     }
     //更新当前出牌对象
     NSUInteger nextPlayer = [self scheduleNextPlayer];
     NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-    [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:[_centralsMgr currentCentrals]];
+    [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
 }
 
 - (void)sendData:(NSData *)data
 {
     if (currentPlayer == selfIndex || !_isStrategy) {
         //轮到自己出牌
-        [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:[_centralsMgr currentCentrals]];
+        [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
     }
+}
+
+- (void)cleanCentralMgr
+{
+    NSLog(@"清理中心管理器");
+    _centralsMgr.centralsList = nil;
+    _centralsMgr.centralsName = nil;
+}
+
+#pragma mark - myPeripheralDelegate
+- (void)exchangePosition:(NSUInteger)from to:(NSUInteger)to
+{
+    [_centralsMgr.centralsName exchangeObjectAtIndex:from withObjectAtIndex:to];
+    [_centralsMgr.centralsList exchangeObjectAtIndex:from withObjectAtIndex:to];
+}
+
+- (void)startRoom
+{
+    NSLog(@"开始房间");
+    //停止广播
+    [self stopAdvertising];
+    
+    //代理返回设备列表名，包括外设+中心
+    [_delegate deviceList:[self deviceList] error:nil];
+    
+    //清理
+    [self cleanCentralMgr];
+    
+    //房主首先出牌
+    currentPlayer = 1;
+    
+    //将设备列表广播出去
+    for (int idx=0; idx<_centralsMgr.centralsList.count; ++idx) {
+        CBCentral *sendCentral = [_centralsMgr.centralsList objectAtIndex:idx];
+        NSMutableArray *sendData = (NSMutableArray*)[self deviceList];
+        [sendData insertObject:[NSNumber numberWithInt:idx] atIndex:0];
+        NSData *deviceData = [NSKeyedArchiver archivedDataWithRootObject:sendData];
+        [_peripheralMgr updateValue:deviceData forCharacteristic:_nameCharacteristic
+               onSubscribedCentrals:@[sendCentral]];
+    }
+}
+
+- (void)closeRoom
+{
+    NSLog(@"关闭房间");
+    //停止广播
+    [self stopAdvertising];
+    
+    //清理
+    [self cleanCentralMgr];
 }
 
 #pragma mark - Peripheral Manager Delegate Methods
@@ -256,7 +287,7 @@
             if (value != nil) {
                 [_delegate recvData:value];
                 
-                [self forwardMessage:value];
+                [self dispatchMessage:value];
             }
         }
         [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
@@ -268,14 +299,13 @@
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didSubscribeToCharacteristic:(CBCharacteristic *)characteristic
 {
-    NSLog(@"Central subscribed to characteristic,%lu", (unsigned long)central.maximumUpdateValueLength);
-    
-    //将订阅特性的中心存储到中心管理器
-    //[_centralsMgr addCentral:central name:nil];
-    
-    //_chatCharacteristic = characteristic;
-//    NSData *updatedData = characteristic.value;
-//    [_peripheralMgr updateValue:updatedData forCharacteristic:(CBMutableCharacteristic*)characteristic onSubscribedCentrals:nil];
+    if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
+        NSLog(@"订阅设备名特性");
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
+        NSLog(@"订阅调度特性");
+    }else{
+        NSLog(@"订阅数据传输特性");
+    }
 }
 
 /*
@@ -283,11 +313,14 @@
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic
 {
-    NSLog(@"Central unsubscribed from characteristic");
-    
-    //将中心从中心管理器移除
-    [_centralsMgr removeCentral:central orName:nil];
-    
+
+    if ([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
+        NSLog(@"取消设备名特性订阅");
+    }else{
+        NSLog(@"取消调度或数据传输特性订阅");
+        //将中心从中心管理器移除
+        [_centralsMgr removeCentral:central];
+    }
 }
 
 /*

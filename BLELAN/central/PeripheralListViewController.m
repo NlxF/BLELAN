@@ -77,12 +77,13 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 - (void)UpdatePeripheralList:(NSString *)name
 {
-    [self.peripheralsList addObject:name];
-    
-    [self.peripheralTableView beginUpdates];
-    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
-    [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
-    [self.peripheralTableView endUpdates];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.peripheralsList addObject:name];
+        [self.peripheralTableView beginUpdates];
+        NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
+        [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationBottom];
+        [self.peripheralTableView endUpdates];
+    });
 }
 
 - (void)showTableView:(UIViewController *)fView animated:(BOOL)animated

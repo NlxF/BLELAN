@@ -40,7 +40,7 @@
 
 - (void)startAsPeripheral
 {
-    if (_ligjtair == nil) {
+    if (_ligjtair == nil || _ligjtair->isCentral) {
         _ligjtair = [[LightLAN alloc] initWithType:PeripheralType name:@"ROOM-1" attached:self mode:YES];
     }
     
@@ -49,7 +49,7 @@
 
 - (void)startAsCentral
 {
-    if (_ligjtair == nil) {
+    if (_ligjtair == nil || !_ligjtair->isCentral) {
         _ligjtair = [[LightLAN alloc] initWithType:CentralType name:@"player-1" attached:self mode:YES];
     }
     

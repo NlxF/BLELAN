@@ -79,7 +79,7 @@
         [NSThread sleepForTimeInterval:0.5];
     }
     
-    [_centralMgr scanForPeripheralsWithServices:nil
+    [_centralMgr scanForPeripheralsWithServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]
                                         options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
     
     NSLog(@"开始扫描");
@@ -125,7 +125,7 @@
     _currentPeripheral = [_allPeripherals objectAtIndex:indexPath.row];
     [_centralMgr connectPeripheral:_currentPeripheral options:nil];
     
-    NSLog(@"Connecting to peripheral %@", _currentPeripheral);
+    NSLog(@"连接外设 %@", _currentPeripheral.name);
 }
 
 
@@ -162,17 +162,14 @@
     if (RSSI.integerValue > -15 || RSSI.integerValue < -95) {
         return;
     }
-    if ([peripheral.name length] == 0) {
-        return;
-    }
+    
     //将相关数据添加到数组
     if ([_allPeripherals containsObject:peripheral]) {
         return;
     }
     
     showData data;
-    char *name = [peripheral.name cStringUsingEncoding:NSUTF8StringEncoding];
-    strcpy(data.name, strlen(name)>0?name:"UnKnown");
+    strcpy(data.name, [[advertisementData objectForKey:CBAdvertisementDataLocalNameKey] cStringUsingEncoding:NSUTF8StringEncoding]);
     data.percentage = (RSSI.integerValue + 95.) / 80;
     NSValue *dataValue = [NSValue valueWithBytes:&data objCType:@encode(showData)];
     [_allPeripherals addObject:peripheral];
@@ -210,7 +207,7 @@
  */
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    NSLog(@"蓝牙断开");
+    NSLog(@"蓝牙断开, %@", error.localizedDescription);
     _currentPeripheral = nil;
 }
 
@@ -235,6 +232,7 @@
         [self cleanup];
         return;
     }
+    NSLog(@"探索感兴趣的服务");
     //继续发现感兴趣的特性
     for(CBService *service in peripheral.services){
         [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:BROADCASTCHARACTERUUID], [CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]] forService:service];
@@ -252,13 +250,16 @@
         [self cleanup];
         return;
     }
-    
+    NSLog(@"探索感兴趣的特性");
     for (CBCharacteristic *character in service.characteristics) {
+        NSLog(@"发现特性，UUID=%@,", [character.UUID UUIDString ]);
         if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
             //设备名称特性
+            NSLog(@"发送中心名，%@", _centralName);
             NSData *centralName = [_centralName dataUsingEncoding:NSUTF8StringEncoding];
-            [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithoutResponse];
+            [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithResponse];
             //订阅，等待游戏开始后设备列表更新
+            NSLog(@"订阅特性，等待开始");
             [peripheral setNotifyValue:YES forCharacteristic:character];
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
             //调度特性
@@ -268,7 +269,7 @@
             }
         }else{
             //游戏特性
-            _gameCharacteristic = character;
+            //_gameCharacteristic = character;
         }
     }
     //接下来等待数据到来
@@ -283,6 +284,7 @@
         ALERT(_attachedViewController, @"接受数据失败", [error localizedDescription]);
         return;
     }
+    NSLog(@"接收到数据");
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
         NSArray *deviceList = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
@@ -337,6 +339,11 @@
 //写入特性之后的回调
 - (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
-    
+    if (error) {
+        NSLog(@"写入特性:%@, 出错，%@", [characteristic.UUID UUIDString], error.localizedDescription);
+        return;
+    }
+    NSLog(@"写入特性:%@, 值=%@", [characteristic.UUID UUIDString], characteristic.value);
 }
+
 @end

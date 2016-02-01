@@ -32,6 +32,10 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 
 @interface LightLAN : NSObject
+{
+    @public
+    BOOL  isCentral;
+}
 
 /*******************************common*********************************/
 

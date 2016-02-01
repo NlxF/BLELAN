@@ -163,7 +163,7 @@
 
 - (void)sendData:(NSData *)data
 {
-    if (currentPlayer == selfIndex) {
+    if (currentPlayer == selfIndex || !_isStrategy) {
         //轮到自己出牌
         [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:[_centralsMgr currentCentrals]];
     }
@@ -183,18 +183,18 @@
 
     //游戏特性
     _gameCharacteristic                = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
-                                                                     properties:CBCharacteristicPropertyNotify
+                                                                     properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
                                                                           value:nil
-                                                                    permissions:CBAttributePermissionsReadable];
+                                                                    permissions:CBAttributePermissionsReadable|CBAttributePermissionsWriteable];
 
     //设备名称特性
-    _nameCharacteristic                = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
-                                                                 properties:CBCharacteristicPropertyNotify
+    _nameCharacteristic          = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]
+                                                                 properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
                                                                       value:nil
-                                                                permissions:CBAttributePermissionsReadable];
+                                                                permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
     //调度特性
     _scheduleCharacteristic            = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]
-                                                                     properties:CBCharacteristicPropertyNotify
+                                                                     properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
                                                                           value:nil
                                                                     permissions:CBAttributePermissionsReadable];
     //特性添加到服务
@@ -224,27 +224,31 @@
         ALERT(_attachedViewController, @"广播失败", [error localizedDescription]);
         return;
     }
-    NSLog(@"开始广播");
+    NSLog(@"开始广播, 外设名: %@", _peripheralName);
 }
 
 //接收到中心端读取特性的请求, (发送数据)
 - (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveReadRequest:(CBATTRequest *)request
 {
     // 对请求作出成功响应
+    NSLog(@"收到中心度请求");
     [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
 }
 
 //接收到中心端写特性的请求，(接收数据)
 - (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveWriteRequests:(NSArray<CBATTRequest *> *)requests
 {
+    NSLog(@"收到中心数据");
     for (CBATTRequest*request in requests) {
         if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
             //收到中心发来的设备名
-            NSString *centralName = [[NSString alloc] initWithData:request.characteristic.value encoding:NSUTF8StringEncoding];
+            NSString *centralName = [[NSString alloc] initWithData:request.value encoding:NSUTF8StringEncoding];
             
             //将设备名存储到中心管理器
             [_centralsMgr addCentral:request.central name: centralName];
             
+            //更新tableview
+            [_centralTableViewCtrl UpdateCentralList:centralName];
         }else{
             //具体业务逻辑数据
             NSData *value;
@@ -254,8 +258,8 @@
                 
                 [self forwardMessage:value];
             }
-            [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
         }
+        [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
     }
 }
 
@@ -267,7 +271,7 @@
     NSLog(@"Central subscribed to characteristic,%lu", (unsigned long)central.maximumUpdateValueLength);
     
     //将订阅特性的中心存储到中心管理器
-    //[_centralsMgr addCentral:central];
+    //[_centralsMgr addCentral:central name:nil];
     
     //_chatCharacteristic = characteristic;
 //    NSData *updatedData = characteristic.value;

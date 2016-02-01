@@ -53,11 +53,19 @@ typedef struct
 
 @interface Helper : NSObject
 
++ (CGRect)deviceRect;
+
 + (CGRect)titleRect;
 
 + (CGRect)tableRect;
 
-+ (CGRect)deviceRect;
++ (CGRect)footRect;
+
++ (CGRect)leftButton;
+
++ (CGRect)rightButton;
+
++ (CGRect)topRightButton;
 
 + (NSString *)imageNameBySignal:(float)value;
 

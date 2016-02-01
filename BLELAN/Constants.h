@@ -17,7 +17,11 @@ typedef unsigned char                   UInt8;
 #define CENTRALTABLEVIEWWITH 200
 //tableview 高
 #define CENTRALTABLEVIEWHEIGHT 350
+//title 高
 #define CENTRALTABLEVIEW_HEADER_HEIGHT 50.
+//foot 高
+#define CENTRALFOOTHEIGHT 50.
+
 #define RADIUS 5.
 
 /*列表刷新频率*/

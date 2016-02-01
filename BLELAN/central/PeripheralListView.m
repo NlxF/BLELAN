@@ -62,7 +62,7 @@
     
     NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [style setAlignment:NSTextAlignmentCenter];
-    [_title drawInRect:titleRect withAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16.], NSParagraphStyleAttributeName:style}];
+    [_title drawInRect:titleRect withAttributes:@{NSFontAttributeName:[UIFont systemFontOfSize:16.], NSParagraphStyleAttributeName:style, NSForegroundColorAttributeName:[UIColor whiteColor]}];
 
     CGContextFillRect(ctx, separatorRect);
 }

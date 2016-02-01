@@ -31,23 +31,68 @@
     return rect;
 }
 
-+ (CGRect)tableRect
++ (CGRect)titleRect
 {
-    CGRect deviceRect = [self deviceRect];
-    CGRect tableRect = CGRectMake((deviceRect.size.width - CENTRALTABLEVIEWWITH) / 2,
-                                  (deviceRect.size.height- CENTRALTABLEVIEWHEIGHT + CENTRALTABLEVIEW_HEADER_HEIGHT) / 2,
-                                  CENTRALTABLEVIEWWITH,
+    CGRect rect = [self deviceRect];
+    CGRect titleRect = CGRectMake((rect.size.width - CENTRALTABLEVIEWWITH) / 2.,
+                                  (rect.size.height - CENTRALTABLEVIEW_HEADER_HEIGHT - CENTRALTABLEVIEWHEIGHT - CENTRALFOOTHEIGHT) / 2., CENTRALTABLEVIEWWITH,
                                   CENTRALTABLEVIEWHEIGHT);
-    return tableRect;
+    
+    return titleRect;
 }
 
 
-+ (CGRect)titleRect
++ (CGRect)tableRect
 {
-    CGRect rect = [self tableRect];
-    rect.origin.y -= CENTRALTABLEVIEW_HEADER_HEIGHT;
-    rect.size.height = CENTRALTABLEVIEW_HEADER_HEIGHT;
+    CGRect titleRect = [self titleRect];
+    titleRect.origin.y += CENTRALTABLEVIEW_HEADER_HEIGHT;
+    
+    return titleRect;
+}
+
++ (CGRect)footRect
+{
+    CGRect footRect = [self tableRect];
+    footRect.origin.y += CENTRALTABLEVIEWHEIGHT;
+    
+    return footRect;
+}
+
++ (CGRect)leftButton
+{
+    CGRect rect = [self footRect];
+    rect.size.width = 50;         //button 宽50
+    rect.size.height = 20;       //button  高20
+    rect.origin.x += 20;          //距右 20
+    rect.origin.y += (CENTRALFOOTHEIGHT - rect.size.height) / 2.;
+    
     return rect;
+}
+
++ (CGRect)rightButton
+{
+    CGRect rect = [self footRect];
+    rect.size.width = 50;
+    rect.size.height = 20;
+    rect.origin.x += CENTRALTABLEVIEWWITH;
+    rect.origin.x -= rect.size.width;
+    rect.origin.x -= 20;      //距左20
+    rect.origin.y += (CENTRALFOOTHEIGHT - rect.size.height) / 2.;
+    
+    return rect;
+}
+
++ (CGRect)topRightButton
+{
+    CGRect topRight = [self titleRect];
+    topRight.size.width = 50;
+    topRight.size.height = 20;
+    topRight.origin.x += CENTRALTABLEVIEWWITH;
+    topRight.origin.x -= topRight.size.width;
+    topRight.origin.x -= 0.5;   //距左
+    topRight.origin.y += (CENTRALTABLEVIEW_HEADER_HEIGHT - topRight.size.height) / 2.;
+    
+    return topRight;
 }
 
 + (void)fadeIn:(UIView *)thisview

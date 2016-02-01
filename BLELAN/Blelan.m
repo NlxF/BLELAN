@@ -16,7 +16,6 @@
 
 @interface LightLAN()
 {
-    BOOL  isCentral;
 }
 
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
@@ -27,7 +26,6 @@
 
 
 @implementation LightLAN
-
 #pragma mark - common
 
 /**

@@ -30,6 +30,7 @@
 @property (nonatomic,   weak) UIViewController             *attachedViewController;
 @property (nonatomic, assign) BOOL                         isStrategy;
 @property (nonatomic, assign) BOOL                         isPrepare;
+@property (nonatomic,   weak) connectBlk                   blk;
 @end
 
 @implementation CCentral
@@ -84,11 +85,9 @@
     
     NSLog(@"开始扫描");
     
-    if (_peripheralListView == nil) {
-        _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索..."];
-        _peripheralListView.delegate = self;
-        [_peripheralListView showTableView:_attachedViewController animated:YES];
-    }
+    _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
+    _peripheralListView.delegate = self;
+    [_peripheralListView showTableView:_attachedViewController animated:YES];
 }
 
 /*
@@ -98,7 +97,6 @@
 {
     //清空外设列表
     _allPeripherals = nil;
-    _peripheralListView.peripheralsList = nil;
     
     //停止扫描
     if (_centralMgr.isScanning) {
@@ -140,7 +138,7 @@
 }
 
 #pragma mark - myCentralDelegate
-- (void)joinRoom:(NSUInteger)row
+- (void)joinRoom:(NSUInteger)row block:(connectBlk)blk
 {
     _currentPeripheral = [_allPeripherals objectAtIndex:row];
     if (_currentPeripheral) {
@@ -148,24 +146,18 @@
     }
     NSLog(@"连接外设 %@", _currentPeripheral.name);
     
-    [self stopScanning];
+    _blk = blk;
 }
 
-- (void)leaveRoomScan:(BOOL)needSacn
+- (void)leaveRoom
 {
     if (_currentPeripheral) {
         [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     }
 
     [self cleanup];
-    
-    [self scan];
 }
 
-- (void)closeTableView
-{
-    
-}
 #pragma mark - CBCentralManager Delegate
 /*
  * this callback comes whenever a peripheral is discovered，need run in new thread
@@ -198,8 +190,11 @@
  */
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    ALERT(_attachedViewController, @"连接失败", error.localizedDescription);
-    [self cleanup];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        ALERT(_attachedViewController, @"连接失败", @"列表过期，请重新刷新");
+    });
+    
+    //[self cleanup];
 }
 
 /*
@@ -209,6 +204,9 @@
 {
     NSLog(@"连接外设成功");
     [self stopScanning];
+    
+    //异步执行界面更新
+    dispatch_async(dispatch_get_main_queue(), _blk);
     
     //设置代理
     peripheral.delegate = self;

@@ -119,4 +119,22 @@
     }];
 }
 
++ (FBShimmeringView *)shimmerWithTitle:(NSString *)title rect:(CGRect)rect
+{
+    FBShimmeringView *fbshimmer = [[FBShimmeringView alloc] initWithFrame:rect];
+    //fbshimmer.shimmeringPauseDuration = 0.1;
+    fbshimmer.shimmeringSpeed = 80;
+    fbshimmer.shimmeringOpacity = 0;
+    fbshimmer.shimmeringBeginFadeDuration = 1;
+    fbshimmer.shimmeringEndFadeDuration = 0.5;
+    
+    UILabel *logoLabel = [[UILabel alloc] initWithFrame:fbshimmer.bounds];
+    logoLabel.text = NSLocalizedString(title, nil);
+    logoLabel.textColor = [UIColor whiteColor];
+    logoLabel.textAlignment = NSTextAlignmentCenter;
+    logoLabel.backgroundColor = [UIColor clearColor];
+    fbshimmer.contentView = logoLabel;
+    
+    return fbshimmer;
+}
 @end

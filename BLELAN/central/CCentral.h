@@ -9,14 +9,14 @@
 #import <Foundation/Foundation.h>
 #import "helper.h"
 #import "BLELAN.h"
+#import "Constants.h"
+
 
 @protocol myCentralDelegate <NSObject>
 
-- (void)joinRoom:(NSUInteger)row;
+- (void)joinRoom:(NSUInteger)row block:(connectBlk)blk;
 
 - (void)leaveRoom;
-
-- (void)closeTableView;
 
 @end
 

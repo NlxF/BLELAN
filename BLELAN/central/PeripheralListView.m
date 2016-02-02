@@ -40,7 +40,7 @@
     
     // Draw the background with shadow
     CGContextSetShadowWithColor(ctx, CGSizeZero, 6., [UIColor colorWithWhite:0 alpha:.75].CGColor);
-    [[UIColor colorWithWhite:0 alpha:.75] setFill];
+    [[UIColor colorWithWhite:0 alpha:0.750] setFill];
     
     float width = bgRect.size.width;
     float height = bgRect.size.height;

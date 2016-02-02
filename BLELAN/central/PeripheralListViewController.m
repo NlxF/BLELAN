@@ -5,25 +5,31 @@
 //  Created by luxiaofei on 16/1/23.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
-#import "TBActivityView.h"
+
 #import "PeripheralListView.h"
 #import "PeripheralListViewCell.h"
 #import "PeripheralListViewController.h"
 #import "helper.h"
 #import "../Constants.h"
-
+#import "../third/FBShimmering/FBShimmering.h"
+#import "../third/FBShimmering/FBShimmeringView.h"
+#import "../third/FXBlurView/FXBlurView.h"
 
 static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @interface PeripheralListViewController ()
-
-//@property (nonatomic, assign) NSInteger          currentRow;
+{
+}
 
 @property (nonatomic, strong) UITableView        *peripheralTableView;
 
-@property (nonatomic, strong) NSString             *tableTitle;
+@property (nonatomic, strong) NSString           *tableTitle;
 
-@property (nonatomic, strong) TBActivityView    *tbView;
+@property (nonatomic, strong) NSMutableArray     *peripheralsList;
+
+@property (nonatomic, strong) FBShimmeringView   *fbshimmer;
+
+@property (nonatomic, strong) FXBlurView         *blur;
 
 @end
 
@@ -124,6 +130,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     }
 }
 
+
 //- (void)handleSwipeGesture:(UIGestureRecognizer*)sender
 //{
 //    CGPoint point = [sender locationInView:_peripheralTableView];
@@ -145,6 +152,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 //    }
 //}
 
+#pragma mark - touch event
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
     UITouch *touch = [touches anyObject];
@@ -152,11 +160,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     if(CGRectContainsPoint([Helper titleRect], point) || CGRectContainsPoint([Helper footRect], point))
         return;
     
-    if ([_delegate respondsToSelector:@selector(closeTableView)]) {
-        [_delegate closeTableView];
-    }
-    
-    // dismiss self
+    //dismiss self
     [Helper fadeOut:self.view];
 }
 
@@ -217,20 +221,55 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     PeripheralListViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    if ([_delegate respondsToSelector:@selector(joinRoom:)]) {
-        //[_delegate joinRoom:indexPath.row];
-        if (_tbView == nil) {
-            _tbView = [[TBActivityView alloc] initWithFrame:cell.frame];
-        }else{
-            _tbView.frame = cell.frame;
+    
+    if (cell.selected && _fbshimmer.shimmering) {
+        NSLog(@"取消等待");
+        cell.textLabel.textColor = CELLCOLOR;
+        _fbshimmer.shimmering = NO;
+        _blur.hidden = YES;
+        
+        //leave waitting
+        [_delegate leaveRoom];
+        
+    }else{
+        if ([_delegate respondsToSelector:@selector(joinRoom:block:)]) {
+            connectBlk blk = ^void(){
+                NSLog(@"等待开始");
+                CGRect rect = CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height);
+                //Add Blur
+                if (_blur == nil){
+                    _blur = [[FXBlurView alloc] initWithFrame:rect];
+                    _blur.tintColor = [UIColor blackColor];
+                    _blur.blurRadius = 0;
+                    _blur.dynamic = YES;
+                }
+                if(_blur.hidden)
+                    _blur.hidden = NO;
+                cell.textLabel.textColor = [UIColor blackColor];
+                [cell addSubview:_blur];
+                
+                //Add waitting shimmer
+                if(_fbshimmer == nil)
+                    _fbshimmer = [Helper shimmerWithTitle:@"等待房主开始,轻点退出" rect:rect];
+                
+                [_blur addSubview:_fbshimmer];
+                _fbshimmer.shimmering = YES;
+            };
+            blk();
+            //[_delegate joinRoom:indexPath.row block:blk];
         }
-        [cell addSubview:_tbView];
-        [_tbView startAnimate];
     }
 }
 
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    NSLog(@"取消%d行选中状态", indexPath.row);
+    
+    PeripheralListViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+    //还原cell text颜色
+    cell.textLabel.textColor = CELLCOLOR;
+    //停止闪烁
+    _fbshimmer.shimmering = NO;
 }
 
 @end

@@ -11,6 +11,7 @@
 
 typedef unsigned short                  UInt16;
 typedef unsigned char                   UInt8;
+typedef void(^connectBlk)();
 
 /*table view相关*/
 //tableview 宽
@@ -29,10 +30,13 @@ typedef unsigned char                   UInt8;
 
 /*peripheral tableview cell 标识*/
 #define REUSEIDENTIFIER              @"reuseIdentifier"
+/*peripheral tableview cell 颜色*/
+#define CELLCOLOR                    [UIColor whiteColor]
 
 /*central tableview cell 标识*/
 #define CENTRALREUSEIDENTIFIER @"centralReuseIdentifier"
-
+/*central tableview cell 颜色*/
+#define CELLCOLOR2                   [UIColor whiteColor]
 
 /*蓝牙连接时的通知*/
 //#define CONNECTNOTF               @"connectNotify"
@@ -50,7 +54,7 @@ typedef unsigned char                   UInt8;
 
 /*表示信号强弱的图名*/
 #define  SIGNALHIGH                   @"high.png"
-#define  SIGNALMID                     @"middle.png"
+#define  SIGNALMID                    @"middle.png"
 #define  SIGNALLOW                    @"low.png"
 
 /*外设提供的服务的UUID*/

@@ -5,7 +5,7 @@
 //  Created by luxiaofei on 16/1/23.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
-
+#import "../Constants.h"
 #import "PeripheralListViewCell.h"
 
 @implementation PeripheralListViewCell
@@ -15,8 +15,9 @@
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
         self.backgroundColor = [UIColor clearColor];
-        self.textLabel.textColor = [UIColor whiteColor];
+        self.textLabel.textColor = CELLCOLOR;;
         self.textLabel.font = [UIFont fontWithName:@"Helvetica" size:15.];
+        self.selectionStyle = UITableViewCellSelectionStyleNone;
     }
     return self;
 }

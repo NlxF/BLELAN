@@ -10,6 +10,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreBluetooth/CoreBluetooth.h>
 #import "comm.h"
+#import "../third/FBShimmering/FBShimmeringView.h"
 
 
 #define ALERT(parent, title, msg)   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title \
@@ -72,5 +73,7 @@ typedef struct
 + (void)fadeIn:(UIView *)thisview;
 
 + (void)fadeOut:(UIView *)thisview;
+
++ (FBShimmeringView *)shimmerWithTitle:(NSString *)title rect:(CGRect)rect;
 
 @end

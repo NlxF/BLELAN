@@ -143,22 +143,29 @@
 - (void)joinRoom:(NSUInteger)row
 {
     _currentPeripheral = [_allPeripherals objectAtIndex:row];
-    [_centralMgr connectPeripheral:_currentPeripheral options:nil];
-    
+    if (_currentPeripheral) {
+        [_centralMgr connectPeripheral:_currentPeripheral options:nil];
+    }
     NSLog(@"连接外设 %@", _currentPeripheral.name);
     
     [self stopScanning];
 }
 
-- (void)leaveRoom
+- (void)leaveRoomScan:(BOOL)needSacn
 {
-    [_centralMgr cancelPeripheralConnection:_currentPeripheral];
-    
+    if (_currentPeripheral) {
+        [_centralMgr cancelPeripheralConnection:_currentPeripheral];
+    }
+
     [self cleanup];
     
     [self scan];
 }
 
+- (void)closeTableView
+{
+    
+}
 #pragma mark - CBCentralManager Delegate
 /*
  * this callback comes whenever a peripheral is discovered，need run in new thread

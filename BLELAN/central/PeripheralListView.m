@@ -30,7 +30,7 @@
 - (void)drawRect:(CGRect)rect {
     
     float x = (rect.size.width - CENTRALTABLEVIEWWITH) / 2;
-    float y = (rect.size.height - CENTRALTABLEVIEWHEIGHT - CENTRALTABLEVIEW_HEADER_HEIGHT) / 2 ;
+    float y = (rect.size.height - CENTRALTABLEVIEWHEIGHT - CENTRALTABLEVIEW_HEADER_HEIGHT - CENTRALFOOTHEIGHT) / 2 ;
     
     CGRect bgRect = CGRectInset(rect, x, y);
     
@@ -58,7 +58,7 @@
     // Draw the title and the separator with shadow
     CGContextSetShadowWithColor(ctx, CGSizeMake(0, 1), 0.5f, [UIColor blackColor].CGColor);
     [[UIColor colorWithRed:0.020 green:0.549 blue:0.961 alpha:1.] setFill];
-    CGRect titleRect = CGRectMake(x + 10, y + 10 + 5, CENTRALTABLEVIEWWITH, 30);
+    CGRect titleRect = CGRectMake(x, y+CENTRALTABLEVIEW_HEADER_HEIGHT/3.5, CENTRALTABLEVIEWWITH, CENTRALTABLEVIEW_HEADER_HEIGHT);
     
     NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [style setAlignment:NSTextAlignmentCenter];

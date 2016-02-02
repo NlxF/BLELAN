@@ -5,7 +5,7 @@
 //  Created by luxiaofei on 16/1/23.
 //  Copyright © 2016年 luxiaofei. All rights reserved.
 //
-
+#import "TBActivityView.h"
 #import "PeripheralListView.h"
 #import "PeripheralListViewCell.h"
 #import "PeripheralListViewController.h"
@@ -17,15 +17,13 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @interface PeripheralListViewController ()
 
-@property (nonatomic, assign) NSInteger          currentRow;
+//@property (nonatomic, assign) NSInteger          currentRow;
 
 @property (nonatomic, strong) UITableView        *peripheralTableView;
 
-@property (nonatomic, strong) NSString           *tableTitle;
+@property (nonatomic, strong) NSString             *tableTitle;
 
-@property (nonatomic, strong) UIButton           *leftBtn;
-
-@property (nonatomic, strong) UIButton           *rightBtn;
+@property (nonatomic, strong) TBActivityView    *tbView;
 
 @end
 
@@ -34,25 +32,27 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-    self.view = [[PeripheralListView alloc] initWithFrame:[Helper tableRect]
+    self.view = [[PeripheralListView alloc] initWithFrame:[Helper deviceRect]
                                                  style:UITableViewStylePlain
                                                  title:_tableTitle];
     self.view.alpha = 0.1;
     self.view.backgroundColor = [UIColor clearColor];
     
-    //add left button
-    _leftBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    _leftBtn.frame = [Helper leftButton];
-    [_leftBtn setTitle:@"加入" forState:UIControlStateNormal];
-    [_leftBtn addTarget:self action:@selector(joinRoom) forControlEvents:UIControlEventTouchDown];
-    [self.view addSubview:_leftBtn];
-    
-    _rightBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    _rightBtn.frame = [Helper rightButton];
-    [_rightBtn setTitle:@"离开" forState:UIControlStateNormal];
-    [_rightBtn setEnabled:NO];
-    [_rightBtn addTarget:self action:@selector(leaveRoom) forControlEvents:UIControlEventTouchDown];
-    [self.view addSubview:_rightBtn];
+    _peripheralTableView.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
+    _peripheralTableView.backgroundColor = [UIColor clearColor];
+    [_peripheralTableView registerClass:[PeripheralListViewCell class] forCellReuseIdentifier:peripheralCellIdentity];
+    _peripheralTableView.delegate = self;
+    _peripheralTableView.dataSource = self;
+    //_peripheralTableView.allowsSelection = NO;
+    [self.view addSubview:_peripheralTableView];
+
+    //添加手势
+//    UISwipeGestureRecognizer *swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeGesture:)];
+//    [_peripheralTableView addGestureRecognizer:swipeGesture];
+//    //左滑
+//    UISwipeGestureRecognizer *swipeLeftGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeGesture:)];
+//    swipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
+//    [_peripheralTableView addGestureRecognizer:swipeLeftGesture];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -67,12 +67,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         _peripheralTableView = [[UITableView alloc] initWithFrame:[Helper tableRect]
                                                        style:UITableViewStylePlain];
         
-        _peripheralTableView.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
-        _peripheralTableView.backgroundColor = [UIColor clearColor];
-        [_peripheralTableView registerClass:[PeripheralListViewCell class] forCellReuseIdentifier:peripheralCellIdentity];
-        _peripheralTableView.delegate = self;
-        _peripheralTableView.dataSource = self;
-        [self.view addSubview:_peripheralTableView];
     }
     
     return self;
@@ -82,6 +76,17 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 {
     if (_peripheralsList == nil) {
         _peripheralsList = [[NSMutableArray alloc] init];
+        
+        showData data;
+        strcpy(data.name, "ROOM-1");
+        data.percentage = 0.5;
+        NSValue *value = [NSValue valueWithBytes:&data objCType:@encode(showData)];
+        [_peripheralsList addObject:value];
+        
+        strcpy(data.name, "ROOM-2");
+        data.percentage = 0.5;
+        value = [NSValue value:&data withObjCType:@encode(showData)];
+        [_peripheralsList addObject:value];
     }
     return _peripheralsList;
 }
@@ -119,37 +124,41 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     }
 }
 
-- (void)joinRoom
-{
-    if (_currentRow >= 0) {
-        [_delegate joinRoom:_currentRow];
-    }
-    [_leftBtn setEnabled:NO];
-    [_rightBtn setEnabled:YES];
-}
-
-- (void)leaveRoom
-{
-    [_delegate leaveRoom];
-    
-    [_leftBtn setEnabled:YES];
-    [_rightBtn setEnabled:NO];
-}
-
-//- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+//- (void)handleSwipeGesture:(UIGestureRecognizer*)sender
 //{
-//    UITouch *touch = [touches anyObject];
-//    CGPoint point = [touch locationInView:self.view];
-//    if(CGRectContainsPoint([Helper titleRect], point))
-//        return;
+//    CGPoint point = [sender locationInView:_peripheralTableView];
+//    NSIndexPath *index = [_peripheralTableView indexPathForRowAtPoint:point];
+//    PeripheralListViewCell *cell = (PeripheralListViewCell*)[_peripheralTableView cellForRowAtIndexPath:index];
 //    
-//    if ([_delegate respondsToSelector:@selector(stopScanning)]) {
-//        [_delegate stopScanning];
+//    UISwipeGestureRecognizerDirection direction = [(UISwipeGestureRecognizer*)sender direction];
+//    //判断方向
+//    switch (direction) {
+//        case UISwipeGestureRecognizerDirectionLeft:
+//            NSLog(@"左滑动");
+//            cell.frame = CGRectOffset(cell.frame, -10, 0);
+//            break;
+//        case UISwipeGestureRecognizerDirectionRight:
+//            NSLog(@"右滑动");
+//            cell.frame = CGRectOffset(cell.frame, 10, 0);
+//        default:
+//            break;
 //    }
-//    
-//    // dismiss self
-//    [Helper fadeOut:self.view];
 //}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    UITouch *touch = [touches anyObject];
+    CGPoint point = [touch locationInView:self.view];
+    if(CGRectContainsPoint([Helper titleRect], point) || CGRectContainsPoint([Helper footRect], point))
+        return;
+    
+    if ([_delegate respondsToSelector:@selector(closeTableView)]) {
+        [_delegate closeTableView];
+    }
+    
+    // dismiss self
+    [Helper fadeOut:self.view];
+}
 
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
@@ -182,6 +191,17 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     return 30.;
 }
 
+//- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+//{
+//    return @"加入";
+//}
+//
+//- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
+//{
+//    if (editingStyle == UITableViewCellEditingStyleDelete) {
+//        [self joinRoom];
+//    }
+//}
 //// Override to support conditional editing of the table view.
 //- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
 //    // Return NO if you do not want the specified item to be editable.
@@ -196,12 +216,21 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 #pragma mark - table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    _currentRow = indexPath.row;
+    PeripheralListViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+    if ([_delegate respondsToSelector:@selector(joinRoom:)]) {
+        //[_delegate joinRoom:indexPath.row];
+        if (_tbView == nil) {
+            _tbView = [[TBActivityView alloc] initWithFrame:cell.frame];
+        }else{
+            _tbView.frame = cell.frame;
+        }
+        [cell addSubview:_tbView];
+        [_tbView startAnimate];
+    }
 }
 
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    _currentRow = -1;
 }
 
 @end

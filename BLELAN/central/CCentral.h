@@ -16,6 +16,8 @@
 
 - (void)leaveRoom;
 
+- (void)closeTableView;
+
 @end
 
 @interface CCentral : NSObject <CentralDelegate, myCentralDelegate>

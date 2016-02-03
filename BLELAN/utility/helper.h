@@ -24,21 +24,16 @@
  *  中心和外设分别需要实现的协议
  */
 @protocol commDelegate <NSObject>
-
-- (void)sendData:(NSData*)data;
-
+@required
+- (BOOL)sendData:(NSData*)data;
 
 @end
 
 @protocol PeripheralDelegate <commDelegate>
 
-
-
 @end
 
 @protocol CentralDelegate <commDelegate>
-
-
 
 @end
 
@@ -65,6 +60,8 @@ typedef struct
 + (CGRect)leftButton;
 
 + (CGRect)rightButton;
+
++ (CGRect)topLeftButton;
 
 + (CGRect)topRightButton;
 

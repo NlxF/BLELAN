@@ -13,6 +13,9 @@ typedef unsigned short                  UInt16;
 typedef unsigned char                   UInt8;
 typedef void(^connectBlk)();
 
+#define DISPATCH_GLOBAL(blk) dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), blk)
+#define DISPATCH_MAIN(blk)   dispatch_async(dispatch_get_main_queue(), blk)
+
 /*table view相关*/
 //tableview 宽
 #define CENTRALTABLEVIEWWITH 200

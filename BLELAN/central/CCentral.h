@@ -28,13 +28,9 @@
 
 - (void)scan;
 
-- (void)scanNeedView:(BOOL)flag;
-
 - (void)stopScanning;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
-
-- (void)sendData:(NSData *)message;
 
 - (void)setAttachedViewController:(UIViewController *)fvc;
 

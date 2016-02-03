@@ -21,7 +21,6 @@ static NSString *centralCellIdentity = @"CentralListView";
 @property (nonatomic, strong) UITableView  *myCentralTable;
 @property (nonatomic, strong) UIView       *titleView;
 @property (nonatomic, strong) NSString     *tableTitle;
-@property (nonatomic, strong) UIButton     *topRight;
 @end
 
 @implementation CentralListViewController
@@ -37,22 +36,22 @@ static NSString *centralCellIdentity = @"CentralListView";
     self.view.backgroundColor = [UIColor clearColor];
     
     UIButton *leftBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    leftBtn.frame = [Helper leftButton];
+    leftBtn.frame = [Helper topLeftButton];
     [leftBtn setTitle:@"关闭" forState:UIControlStateNormal];
     [leftBtn addTarget:self action:@selector(closeRoom) forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:leftBtn];
     
     UIButton *rightBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    rightBtn.frame = [Helper rightButton];
+    rightBtn.frame = [Helper topRightButton];
     [rightBtn setTitle:@"开始" forState:UIControlStateNormal];
     [rightBtn addTarget:self action:@selector(startRoom) forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:rightBtn];
     
-    _topRight = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    _topRight.frame = [Helper topRightButton];
-    [_topRight setTitle:@"排序" forState:UIControlStateNormal];
-    [_topRight addTarget:self action:@selector(changeModel) forControlEvents:UIControlEventTouchDown];
-    [self.view addSubview:_topRight];
+    //长按排序
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] init];
+    longPress.minimumPressDuration = 0.5;
+    [longPress addTarget:self action:@selector(changeModel:)];
+    [_myCentralTable addGestureRecognizer:longPress];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -84,8 +83,6 @@ static NSString *centralCellIdentity = @"CentralListView";
 {
     if (_centralList == nil) {
         _centralList = [[NSMutableArray alloc] init];
-        [_centralList addObject:@"player-1"];
-        [_centralList addObject:@"player-2"];
     }
     return _centralList;
 }
@@ -145,14 +142,23 @@ static NSString *centralCellIdentity = @"CentralListView";
     }
 }
 
-- (void)changeModel
+- (void)changeModel:(id)sender
 {
-    if (_myCentralTable.editing) {
-        [_myCentralTable setEditing:NO animated:YES];
-        [_topRight setTitle:@"排序" forState:UIControlStateNormal];
-    }else{
-        [_myCentralTable setEditing:YES animated:YES];
-        [_topRight setTitle:@"结束" forState:UIControlStateNormal];
+    UILongPressGestureRecognizer *longPress = (UILongPressGestureRecognizer *)sender;
+    UIGestureRecognizerState state = longPress.state;
+    switch (state) {
+        case UIGestureRecognizerStateBegan:
+            NSLog(@"长按开始");
+            if (_myCentralTable.isEditing) {
+                [_myCentralTable setEditing:NO animated:YES];
+            }else
+                [_myCentralTable setEditing:YES animated:YES];
+            break;
+        case UIGestureRecognizerStateEnded:
+            NSLog(@"长按结束");
+            break;
+        default:
+            break;
     }
 }
 
@@ -186,7 +192,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 // 排序
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    NSLog(@"move from row %ld to row %ld", fromIndexPath.row, toIndexPath.row);
+    NSLog(@"move from row %ld to row %ld", (long)fromIndexPath.row, (long)toIndexPath.row);
     [self.centralList exchangeObjectAtIndex:fromIndexPath.row withObjectAtIndex:toIndexPath.row];
     //交换中心设备在管理器中的位置
     [_delegate exchangePosition:fromIndexPath.row to:toIndexPath.row];
@@ -221,6 +227,9 @@ static NSString *centralCellIdentity = @"CentralListView";
         NSLog(@"Delete at row %ld", (long)indexPath.row);
         [self.centralList removeObjectAtIndex:[indexPath row]];
         [self.myCentralTable deleteRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationTop];
+        DISPATCH_GLOBAL(^{
+            [_delegate kickOne:indexPath.row];
+        });
     }
 }
 

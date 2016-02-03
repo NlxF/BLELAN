@@ -31,7 +31,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
  *  @param list  设备名列表，索引从1开始
  *  @param error 是否出错
  */
-- (void)deviceList:(NSArray<NSString*> *)playerList error:(NSError*)error;
+- (void)playersList:(NSArray<NSString*> *)playerList error:(NSError*)error;
 
 /**
  *  当为策略类型时，返回当前操作者索引，基于playerList
@@ -53,9 +53,13 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (instancetype)initWithType:(LightAirType)type name:(NSString*)name attached:(UIViewController *)vc mode:(BOOL)isStrategy;
 
-- (void)sendData:(NSData *)data;
+- (BOOL)sendData:(NSData *)data;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
+
+//- (void)restartWithOldPolicy;
+//
+//- (void)restartWithNewPolicy:(LightAirType)type mode:(BOOL)isStrategy;
 
 /***************************peripheral*********************************/
 - (void)createRoom:(NSString *)roomName;
@@ -63,8 +67,8 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 - (void)startRoom;
 
 - (void)closeRoom;
-/*******************************central*********************************/
 
+/*******************************central*********************************/
 - (void)scanRoom;
 
 - (void)leaveRoom;

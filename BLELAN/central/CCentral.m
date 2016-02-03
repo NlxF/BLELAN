@@ -31,6 +31,7 @@
 @property (nonatomic, assign) BOOL                         isStrategy;
 @property (nonatomic, assign) BOOL                         isPrepare;
 @property (nonatomic,   weak) connectBlk                   blk;
+
 @end
 
 @implementation CCentral
@@ -74,7 +75,7 @@
 /*
  * 开始扫描外设
  */
-- (void)scanNeedView:(BOOL)flag
+- (void)scan
 {
     while(!_isPrepare){
         [NSThread sleepForTimeInterval:0.5];
@@ -84,16 +85,9 @@
                                         options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
     
     NSLog(@"开始扫描");
-    
     _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
     _peripheralListView.delegate = self;
-    if (flag)
-        [_peripheralListView showTableView:_attachedViewController animated:YES];
-}
-
-- (void)scan
-{
-    [self scanNeedView:YES];
+    [_peripheralListView showTableView:_attachedViewController animated:YES];
 }
 
 /*
@@ -111,7 +105,7 @@
     NSLog(@"停止扫描");
 }
 
-- (void)sendData:(NSData *)message
+- (BOOL)sendData:(NSData *)message
 {
     if ((_isStrategy && currentPlayer == selfIndex) || !_isStrategy) {
         //轮到自己出牌,或者竞技类不需要调度
@@ -119,9 +113,10 @@
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:message dst:1 src:selfIndex type:gameType]) {
             [_currentPeripheral writeValue:value forCharacteristic:_gameCharacteristic type:CBCharacteristicWriteWithResponse];
         }
+        return YES;
     }else{
         //还没轮到自己出牌
-        ALERT(_attachedViewController, @"错误", @"还没轮到你出");
+        return NO;
     }
 }
 
@@ -146,7 +141,7 @@
 #pragma mark - myCentralDelegate
 - (void)joinRoom:(NSUInteger)row block:(connectBlk)blk
 {
-    _currentPeripheral = [_allPeripherals objectAtIndex:row];
+    _currentPeripheral = [self.allPeripherals objectAtIndex:row];
     if (_currentPeripheral) {
         [_centralMgr connectPeripheral:_currentPeripheral options:nil];
     }
@@ -170,8 +165,9 @@
 {
     [_allPeripherals removeAllObjects];
     
-    //重新开始扫面，这次不需要弹出视图
-    [self scanNeedView:NO];
+    //重新开始扫描
+    [_centralMgr scanForPeripheralsWithServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]
+                                        options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
 }
 
 #pragma mark - CBCentralManager Delegate
@@ -198,15 +194,17 @@
     [_allPeripherals addObject:peripheral];
     
     //更新外设列表
-    [_peripheralListView UpdatePeripheralList:dataValue];
+    DISPATCH_MAIN(^{
+        [_peripheralListView UpdatePeripheralList:dataValue];
+    });
 }
 
 /*
- * If the connection fails for whatever reason, we need to deal with it.
+ * 连接失败
  */
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
+    DISPATCH_MAIN(^{
         UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"错误" message:@"列表过期,即将刷新" preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
                 [self.peripheralListView refreshList];
@@ -215,7 +213,7 @@
         [_attachedViewController presentViewController:alert animated:YES completion:nil];
     });
     
-    //[self cleanup];
+    [self cleanup];
 }
 
 /*
@@ -226,7 +224,7 @@
     NSLog(@"连接外设成功");
     
     //异步执行界面更新
-    dispatch_async(dispatch_get_main_queue(), _blk);
+    //dispatch_async(dispatch_get_main_queue(), _blk);
     
     //设置代理
     peripheral.delegate = self;
@@ -273,8 +271,7 @@
 }
 
 /*
- * The Transfer characteristic was discovered.
- * Once this has been found, we want to subscribe to it, which lets the peripheral know we want the data it contains
+ * 发现特性
  */
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error
 {
@@ -285,7 +282,7 @@
     }
     NSLog(@"探索感兴趣的特性");
     for (CBCharacteristic *character in service.characteristics) {
-        NSLog(@"发现特性，UUID=%@,", [character.UUID UUIDString ]);
+        NSLog(@"发现特性，UUID=%@,", [character.UUID UUIDString]);
         if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
             //设备名称特性
             NSLog(@"发送中心名，%@", _centralName);
@@ -297,12 +294,13 @@
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
             //调度特性
             if(_isStrategy){
-                //策略游戏需要订阅调度特性，来获取出牌顺序
+                //策略类需要订阅调度特性，获取出牌顺序
                 [peripheral setNotifyValue:YES forCharacteristic:character];
             }
-        }else{
-            //游戏特性
-            //_gameCharacteristic = character;
+        }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
+            //数据传输特性
+            [peripheral setNotifyValue:YES forCharacteristic:character];
+            _gameCharacteristic = character;
         }
     }
     //接下来等待数据到来
@@ -314,19 +312,24 @@
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error) {
-        ALERT(_attachedViewController, @"接受数据失败", [error localizedDescription]);
+        DISPATCH_MAIN(^{
+            ALERT(_attachedViewController, @"接受数据失败", [error localizedDescription]);
+        });
         return;
     }
     NSLog(@"接收到数据");
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
         NSArray *recvData = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
+        NSLog(@"player列表，%@", recvData);
         NSNumber *num = [recvData objectAtIndex:0];
         selfIndex = num.intValue;
         NSArray *deviceList = [recvData subarrayWithRange:NSMakeRange(1, recvData.count-1)];
         
         //发起开始通知
-        [_delegate deviceList:deviceList error:nil];
+        DISPATCH_GLOBAL(^{
+            [_delegate playersList:deviceList error:nil];
+        });
         
         //获取列表后取消订阅
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
@@ -338,16 +341,21 @@
         int idx;
         [value getBytes:&idx length:sizeof(idx)];
         //更新当前出牌对象
+        NSLog(@"当前顺序是 %d", idx);
         currentPlayer = idx;
         //更新调度
-        [_delegate UpdateScheduleIndex:idx];
-    }else{
+        DISPATCH_GLOBAL(^{
+            [_delegate UpdateScheduleIndex:idx];
+        });
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
         //接收外设数据
         NSData *data = characteristic.value;
         id recvValue;
         FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
         if(isGameFrame(frameType)){
-            [_delegate recvData:(NSData*)recvValue];
+            DISPATCH_GLOBAL(^{
+                [_delegate recvData:(NSData*)recvValue];
+            });
         }
     }
 }

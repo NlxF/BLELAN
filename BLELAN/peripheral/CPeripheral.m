@@ -57,6 +57,8 @@
         selfIndex = 1;
         //是否准备好广播
         _isPrepare = NO;
+        //初始化出牌顺序
+        currentPlayer = 0;
     }
     return self;
 }
@@ -72,10 +74,9 @@
                                             ]}];
     
     //show table view
-    dispatch_async(dispatch_get_main_queue(), ^{
+    DISPATCH_MAIN(^{
         _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
         _centralTableViewCtrl.delegate = self;
-        
         [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];
         NSLog(@"显示连接设备列表");
     });
@@ -142,12 +143,14 @@
     [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
 }
 
-- (void)sendData:(NSData *)data
+- (BOOL)sendData:(NSData *)data
 {
     if (currentPlayer == selfIndex || !_isStrategy) {
         //轮到自己出牌
         [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+        return YES;
     }
+    return NO;
 }
 
 - (void)cleanCentralMgr
@@ -166,18 +169,18 @@
 
 - (void)startRoom
 {
-    NSLog(@"开始房间");
+    NSLog(@"ROOM开始");
+    
     //停止广播
     [self stopAdvertising];
-    
-    //代理返回设备列表名，包括外设+中心
-    [_delegate deviceList:[self deviceList] error:nil];
     
     //清理
     [self cleanCentralMgr];
     
-    //房主首先出牌
-    currentPlayer = 1;
+    //代理返回设备列表名，包括外设+中心
+    DISPATCH_GLOBAL(^{
+        [_delegate playersList:[self deviceList] error:nil];
+    });
     
     //将设备列表广播出去
     for (int idx=0; idx<_centralsMgr.centralsList.count; ++idx) {
@@ -188,6 +191,8 @@
         [_peripheralMgr updateValue:deviceData forCharacteristic:_nameCharacteristic
                onSubscribedCentrals:@[sendCentral]];
     }
+    //房主首先出牌
+    currentPlayer = 1;
 }
 
 - (void)closeRoom
@@ -195,9 +200,16 @@
     NSLog(@"关闭房间");
     //停止广播
     [self stopAdvertising];
+    //
+    _peripheralMgr = nil;
     
     //清理
     [self cleanCentralMgr];
+}
+
+- (void)kickOne:(NSUInteger)index
+{
+    
 }
 
 #pragma mark - Peripheral Manager Delegate Methods
@@ -303,13 +315,12 @@
         NSLog(@"订阅设备名特性");
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
         NSLog(@"订阅调度特性");
-    }else{
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
         NSLog(@"订阅数据传输特性");
     }
 }
 
-/*
- * 取消订阅特性
+/** 取消订阅特性
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic
 {
@@ -323,13 +334,11 @@
     }
 }
 
-/*
- * 当传输队列有可用的空间时，在此重新发送数据。
+/** 当传输队列有可用的空间时，在此重新发送数据。
  */
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
     
-    //[_peripheralMgr updateValue:_chatCharacteristic.value forCharacteristic:_chatCharacteristic onSubscribedCentrals:nil];
 }
 
 

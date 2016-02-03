@@ -16,12 +16,16 @@
 
 @interface LightLAN()
 {
+    BOOL _isStarted;
+//    BOOL _isStrategy;
+//    NSString *_name;
+//    LightAirType _type;
 }
 
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
-@property (nonatomic, strong) CPeripheral<PeripheralDelegate>    *peripheral;
-@property (nonatomic, strong) id<BlelanDelegate>                    delegate;
-@property (nonatomic,   weak) UIViewController  *attachedVc;
+@property (nonatomic, strong) CPeripheral<PeripheralDelegate>      *peripheral;
+@property (nonatomic, strong) id<BlelanDelegate>                   delegate;
+@property (nonatomic,   weak) UIViewController                     *attachedVc;
 @end
 
 
@@ -35,9 +39,9 @@
  *
  *  @param name 指定设备名称
  *
- *  @param vc 父视图
+ *  @param vc 附加视图
  *
- *  @param isStrategy 游戏类型，竞技或策略。策略类的话需要维护调度中心，竞技类则不用。
+ *  @param isStrategy 通信类型，竞技或策略。策略类的话需要维护调度中心，竞技类则不用。
  *
  *  @return LightAir实例
  */
@@ -54,10 +58,42 @@
             [_central setAttachedViewController:vc];
             isCentral = YES;
         }
+        _isStarted = NO;
         _attachedVc = vc;
+//        _type = type;
+//        _name = name;
+//        _isStrategy = isStrategy;
     }
     return self;
 }
+
+//- (void)restartWithOldPolicy
+//{
+//    if (_type == PeripheralType) {
+//        _peripheral = [[CPeripheral alloc] initWithName:_name mode:_isStrategy];
+//        [_peripheral setAttachedViewController:_attachedVc];
+//        isCentral = NO;
+//    }else{
+//        _central = [[CCentral alloc] initWithName:_name mode:_isStrategy];
+//        [_central setAttachedViewController:_attachedVc];
+//        isCentral = YES;
+//    }
+//}
+//
+//- (void)restartWithNewPolicy:(LightAirType)type mode:(BOOL)isStrategy
+//{
+//    if (type == PeripheralType) {
+//        _peripheral = [[CPeripheral alloc] initWithName:_name mode:isStrategy];
+//        [_peripheral setAttachedViewController:_attachedVc];
+//        isCentral = NO;
+//    }else{
+//        _central = [[CCentral alloc] initWithName:_name mode:isStrategy];
+//        [_central setAttachedViewController:_attachedVc];
+//        isCentral = YES;
+//    }
+//    _type = type;
+//    _isStrategy = isStrategy;
+//}
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate
 {
@@ -72,22 +108,31 @@
 /**
 *  发送数据
 *
-*  @param data 准备好发送的数据
+*  @param data 准备好发送的数据, 若为nil，则传输结束。
 *
+*  @return 是否成功发送
 */
-- (void)sendData:(NSData *)data
+- (BOOL)sendData:(NSData *)data
 {
-    if(isCentral){
-        //中心经由外设转发
-        [_central sendData:data];
+    BOOL isSuccessed;
+    if (data == nil) {
+        if (isCentral)
+            _central = nil;
+        else
+            _peripheral = nil;
+        isSuccessed = NO;
     }else{
-        //外设本身直接发送
-        [_peripheral sendData:data];
+        if(isCentral)
+            //中心经由外设转发
+            isSuccessed = [_central sendData:data];
+        else
+            //外设本身直接发送
+            isSuccessed = [_peripheral sendData:data];
     }
+    return isSuccessed;
 }
 
 #pragma mark -  as a peripheral
-
 /**
  *  启动设备，作为外设开启广播
  *

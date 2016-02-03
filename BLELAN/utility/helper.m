@@ -63,7 +63,7 @@
     CGRect rect = [self footRect];
     rect.size.width = 50;         //button 宽50
     rect.size.height = 20;       //button  高20
-    rect.origin.x += 20;          //距右 20
+    rect.origin.x += 20;          //距右
     rect.origin.y += (CENTRALFOOTHEIGHT - rect.size.height) / 2.;
     
     return rect;
@@ -76,10 +76,21 @@
     rect.size.height = 20;
     rect.origin.x += CENTRALTABLEVIEWWITH;
     rect.origin.x -= rect.size.width;
-    rect.origin.x -= 20;      //距左20
+    rect.origin.x -= 20;      //距左
     rect.origin.y += (CENTRALFOOTHEIGHT - rect.size.height) / 2.;
     
     return rect;
+}
+
++ (CGRect)topLeftButton
+{
+    CGRect topLeft = [self titleRect];
+    topLeft.size.width = 50;
+    topLeft.size.height = 20;
+    topLeft.origin.x += 0;   //距左
+    topLeft.origin.y += (CENTRALTABLEVIEW_HEADER_HEIGHT - topLeft.size.height) / 2.;
+    
+    return topLeft;
 }
 
 + (CGRect)topRightButton

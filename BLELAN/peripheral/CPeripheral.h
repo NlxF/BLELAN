@@ -18,6 +18,8 @@
 
 - (void)closeRoom;
 
+- (void)kickOne:(NSUInteger)index;
+
 @end
 
 @interface CPeripheral : NSObject <PeripheralDelegate, myPeripheralDelegate>
@@ -33,8 +35,6 @@
 - (void)setAttachedViewController:(UIViewController *)fvc;
 
 - (void)dispatchMessage:(NSData *)mesage;
-
-- (void)sendData:(NSData *)data;
 
 - (void)cleanCentralMgr;
 

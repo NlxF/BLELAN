@@ -20,19 +20,19 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 @interface PeripheralListViewController ()
 {
 }
-@property (nonatomic, strong) UITableView        *peripheralTableView;
+@property (nonatomic, strong) UITableView                  *peripheralTableView;
 
-@property (nonatomic, strong) NSString           *tableTitle;
+@property (nonatomic, strong) NSString                     *tableTitle;
 
-@property (nonatomic, strong) NSMutableArray     *peripheralsList;
+@property (nonatomic, strong) NSMutableArray<NSValue*>     *peripheralsList;
 
-@property (nonatomic, strong) FBShimmeringView   *fbshimmer;
+@property (nonatomic, strong) FBShimmeringView             *fbshimmer;
 
-@property (nonatomic, strong) FXBlurView         *blur;
+@property (nonatomic, strong) FXBlurView                   *blur;
 
-@property (nonatomic, strong) UIRefreshControl  *refreshControl;
+@property (nonatomic, strong) UIRefreshControl             *refreshControl;
 
-@property (nonatomic, strong) NSDate *preDate;
+@property (nonatomic, strong) NSDate                       *preDate;
 
 @end
 
@@ -87,16 +87,16 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     if (_peripheralsList == nil) {
         _peripheralsList = [[NSMutableArray alloc] init];
         
-        showData data;
-        strcpy(data.name, "ROOM-1");
-        data.percentage = 0.5;
-        NSValue *value = [NSValue valueWithBytes:&data objCType:@encode(showData)];
-        [_peripheralsList addObject:value];
-        
-        strcpy(data.name, "ROOM-2");
-        data.percentage = 0.5;
-        value = [NSValue value:&data withObjCType:@encode(showData)];
-        [_peripheralsList addObject:value];
+//        showData data;
+//        strcpy(data.name, "ROOM-1");
+//        data.percentage = 0.5;
+//        NSValue *value = [NSValue valueWithBytes:&data objCType:@encode(showData)];
+//        [_peripheralsList addObject:value];
+//        
+//        strcpy(data.name, "ROOM-2");
+//        data.percentage = 0.5;
+//        value = [NSValue value:&data withObjCType:@encode(showData)];
+//        [_peripheralsList addObject:value];
     }
     return _peripheralsList;
 }
@@ -109,15 +109,13 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     [self.view setNeedsDisplay];
 }
 
-- (void)UpdatePeripheralList:(NSString *)name
+- (void)UpdatePeripheralList:(NSValue *)dataValue
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.peripheralsList addObject:name];
-        [self.peripheralTableView beginUpdates];
-        NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
-        [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationLeft];
-        [self.peripheralTableView endUpdates];
-    });
+    [self.peripheralsList addObject:dataValue];
+    [self.peripheralTableView beginUpdates];
+    NSArray *arrInsertRows = [NSArray arrayWithObject:[NSIndexPath indexPathForRow:[self.peripheralsList count]-1 inSection:0]];
+    [self.peripheralTableView insertRowsAtIndexPaths:arrInsertRows withRowAnimation:UITableViewRowAnimationLeft];
+    [self.peripheralTableView endUpdates];
 }
 
 - (void)showTableView:(UIViewController *)fView animated:(BOOL)animated
@@ -144,13 +142,16 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     dispatch_after(popTime, dispatch_get_main_queue(), ^{
         //停止刷新
         [_refreshControl endRefreshing];
-        _preDate = [NSDate date];
-        
-        [_peripheralsList removeAllObjects];
-        [_peripheralTableView reloadData];
-        
-        //清空数据
-        [_delegate reloadList];
+        if (!_fbshimmer.isShimmering) {
+            _preDate = [NSDate date];
+            
+            [_peripheralsList removeAllObjects];
+            
+            //清空数据
+            [_delegate reloadList];
+            
+            [_peripheralTableView reloadData];
+        }
     });
 }
 
@@ -188,11 +189,19 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
     NSLog(@"即将刷新");
-
-    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-    [formatter setDateFormat:@"yy-MM-dd HH:mm:ss"];
-    _refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"上次刷新 %@", [formatter stringFromDate:_preDate]]
-                                                                      attributes:@{NSFontAttributeName: [UIFont systemFontOfSize:7], NSForegroundColorAttributeName: [UIColor greenColor]}];
+    NSAttributedString *attribute;
+    NSMutableDictionary *attrDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:[UIFont systemFontOfSize:7], NSFontAttributeName, [UIColor greenColor], NSForegroundColorAttributeName, nil];
+    
+    if (_fbshimmer.shimmering) {
+        [attrDict setObject:[UIColor redColor] forKey:NSForegroundColorAttributeName];
+        attribute = [[NSAttributedString alloc] initWithString:@"请先离开房间后再刷新" attributes:attrDict];
+    }else{
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat:@"yy-MM-dd HH:mm:ss"];
+        attribute = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"上次刷新 %@", [formatter stringFromDate:_preDate]] attributes:attrDict];
+    }
+    
+    _refreshControl.attributedTitle = attribute;
     
 }
 
@@ -240,12 +249,11 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         
         //leave waitting
         [_delegate leaveRoom];
-        
     }else{
         if ([_delegate respondsToSelector:@selector(joinRoom:block:)]) {
+            CGRect rect = CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height);
             connectBlk blk = ^void(){
                 NSLog(@"等待开始");
-                CGRect rect = CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height);
                 //Add Blur
                 if (_blur == nil){
                     _blur = [[FXBlurView alloc] initWithFrame:rect];
@@ -266,14 +274,14 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
                 _fbshimmer.shimmering = YES;
             };
             blk();
-            //[_delegate joinRoom:indexPath.row block:blk];
+            [_delegate joinRoom:indexPath.row block:blk];
         }
     }
 }
 
 - (void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSLog(@"取消%d行选中状态", indexPath.row);
+    NSLog(@"取消%ld行选中状态", (long)indexPath.row);
     
     PeripheralListViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
     //还原cell text颜色

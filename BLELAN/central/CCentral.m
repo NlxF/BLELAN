@@ -74,7 +74,7 @@
 /*
  * 开始扫描外设
  */
-- (void)scan
+- (void)scanNeedView:(BOOL)flag
 {
     while(!_isPrepare){
         [NSThread sleepForTimeInterval:0.5];
@@ -87,7 +87,13 @@
     
     _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
     _peripheralListView.delegate = self;
-    [_peripheralListView showTableView:_attachedViewController animated:YES];
+    if (flag)
+        [_peripheralListView showTableView:_attachedViewController animated:YES];
+}
+
+- (void)scan
+{
+    [self scanNeedView:YES];
 }
 
 /*
@@ -146,6 +152,8 @@
     }
     NSLog(@"连接外设 %@", _currentPeripheral.name);
     
+    [self stopScanning];
+    
     _blk = blk;
 }
 
@@ -156,6 +164,14 @@
     }
 
     [self cleanup];
+}
+
+- (void)reloadList
+{
+    [_allPeripherals removeAllObjects];
+    
+    //重新开始扫面，这次不需要弹出视图
+    [self scanNeedView:NO];
 }
 
 #pragma mark - CBCentralManager Delegate
@@ -191,7 +207,12 @@
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
     dispatch_async(dispatch_get_main_queue(), ^{
-        ALERT(_attachedViewController, @"连接失败", @"列表过期，请重新刷新");
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"错误" message:@"列表过期,即将刷新" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
+                [self.peripheralListView refreshList];
+        }];
+        [alert addAction:defaultAction];
+        [_attachedViewController presentViewController:alert animated:YES completion:nil];
     });
     
     //[self cleanup];
@@ -203,7 +224,6 @@
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
     NSLog(@"连接外设成功");
-    [self stopScanning];
     
     //异步执行界面更新
     dispatch_async(dispatch_get_main_queue(), _blk);

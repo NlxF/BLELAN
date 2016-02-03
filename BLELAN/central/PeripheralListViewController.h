@@ -13,11 +13,12 @@
 
 @property (nonatomic, weak) id<myCentralDelegate>  delegate;
 
-
 - (id)initWithTitle:(NSString *)aTitle;
 
 - (void)UpdatePeripheralList:(NSValue *)peripheralName;
 
 - (void)showTableView:(UIViewController *)fView animated:(BOOL)animated;
+
+- (void)refreshList;
 
 @end

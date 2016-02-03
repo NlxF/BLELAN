@@ -73,7 +73,7 @@
     
     //show table view
     dispatch_async(dispatch_get_main_queue(), ^{
-        _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"Linked in device"];
+        _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
         _centralTableViewCtrl.delegate = self;
         
         [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];

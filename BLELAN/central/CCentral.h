@@ -18,6 +18,8 @@
 
 - (void)leaveRoom;
 
+- (void)reloadList;
+
 @end
 
 @interface CCentral : NSObject <CentralDelegate, myCentralDelegate>
@@ -25,6 +27,8 @@
 - (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
 
 - (void)scan;
+
+- (void)scanNeedView:(BOOL)flag;
 
 - (void)stopScanning;
 

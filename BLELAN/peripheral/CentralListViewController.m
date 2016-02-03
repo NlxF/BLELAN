@@ -69,7 +69,7 @@ static NSString *centralCellIdentity = @"CentralListView";
                                                        style:UITableViewStylePlain];
         
         _myCentralTable.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
-        _myCentralTable.backgroundColor = [UIColor grayColor];
+        _myCentralTable.backgroundColor = [UIColor clearColor];
         [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:centralCellIdentity];
         _myCentralTable.delegate = self;
         _myCentralTable.dataSource = self;

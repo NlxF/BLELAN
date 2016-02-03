@@ -20,7 +20,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 @interface PeripheralListViewController ()
 {
 }
-
 @property (nonatomic, strong) UITableView        *peripheralTableView;
 
 @property (nonatomic, strong) NSString           *tableTitle;
@@ -30,6 +29,10 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 @property (nonatomic, strong) FBShimmeringView   *fbshimmer;
 
 @property (nonatomic, strong) FXBlurView         *blur;
+
+@property (nonatomic, strong) UIRefreshControl  *refreshControl;
+
+@property (nonatomic, strong) NSDate *preDate;
 
 @end
 
@@ -52,13 +55,14 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     //_peripheralTableView.allowsSelection = NO;
     [self.view addSubview:_peripheralTableView];
 
-    //添加手势
-//    UISwipeGestureRecognizer *swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeGesture:)];
-//    [_peripheralTableView addGestureRecognizer:swipeGesture];
-//    //左滑
-//    UISwipeGestureRecognizer *swipeLeftGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeGesture:)];
-//    swipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
-//    [_peripheralTableView addGestureRecognizer:swipeLeftGesture];
+    //添加刷新
+    _refreshControl = [[UIRefreshControl alloc] init];
+    _refreshControl.tintColor = [UIColor greenColor];
+    [_refreshControl addTarget:self action:@selector(handleRefresh:) forControlEvents:UIControlEventValueChanged];
+    [_peripheralTableView addSubview:_refreshControl];
+    
+    //上次刷新时间
+    _preDate = [NSDate date];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -123,6 +127,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
                                              selector:@selector(orientationDidChange:)
                                                  name:UIApplicationDidChangeStatusBarOrientationNotification
                                                object:nil];
+    
     [fView.view addSubview:self.view];
     [fView addChildViewController:self];
     if (animated) {
@@ -130,28 +135,44 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     }
 }
 
+- (void)handleRefresh: (id)paramSender
+{
+    NSLog(@"正在刷新");
+    
+    int64_t delay_time = 1;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delay_time * NSEC_PER_SEC);
+    dispatch_after(popTime, dispatch_get_main_queue(), ^{
+        //停止刷新
+        [_refreshControl endRefreshing];
+        _preDate = [NSDate date];
+        
+        [_peripheralsList removeAllObjects];
+        [_peripheralTableView reloadData];
+        
+        //清空数据
+        [_delegate reloadList];
+    });
+}
 
-//- (void)handleSwipeGesture:(UIGestureRecognizer*)sender
-//{
-//    CGPoint point = [sender locationInView:_peripheralTableView];
-//    NSIndexPath *index = [_peripheralTableView indexPathForRowAtPoint:point];
-//    PeripheralListViewCell *cell = (PeripheralListViewCell*)[_peripheralTableView cellForRowAtIndexPath:index];
-//    
-//    UISwipeGestureRecognizerDirection direction = [(UISwipeGestureRecognizer*)sender direction];
-//    //判断方向
-//    switch (direction) {
-//        case UISwipeGestureRecognizerDirectionLeft:
-//            NSLog(@"左滑动");
-//            cell.frame = CGRectOffset(cell.frame, -10, 0);
-//            break;
-//        case UISwipeGestureRecognizerDirectionRight:
-//            NSLog(@"右滑动");
-//            cell.frame = CGRectOffset(cell.frame, 10, 0);
-//        default:
-//            break;
-//    }
-//}
-
+- (void)refreshList
+{
+    if (self.refreshControl.refreshing) {
+        //已经在刷新数据了
+    } else {
+        if (self.peripheralTableView.contentOffset.y == 0) {
+            
+            [UIView animateWithDuration:0.25
+                                  delay:0
+                                options:UIViewAnimationOptionBeginFromCurrentState
+                             animations:^(void){
+                                 self.peripheralTableView.contentOffset = CGPointMake(0, -self.refreshControl.frame.size.height);
+                             } completion:^(BOOL finished){
+                                 [self.refreshControl beginRefreshing];
+                                 [self.refreshControl sendActionsForControlEvents:UIControlEventValueChanged];
+                             }];
+        }
+    }
+}
 #pragma mark - touch event
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
@@ -162,6 +183,17 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     
     //dismiss self
     [Helper fadeOut:self.view];
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    NSLog(@"即将刷新");
+
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yy-MM-dd HH:mm:ss"];
+    _refreshControl.attributedTitle = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"上次刷新 %@", [formatter stringFromDate:_preDate]]
+                                                                      attributes:@{NSFontAttributeName: [UIFont systemFontOfSize:7], NSForegroundColorAttributeName: [UIColor greenColor]}];
+    
 }
 
 #pragma mark - Table view data source
@@ -194,28 +226,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 {
     return 30.;
 }
-
-//- (NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
-//{
-//    return @"加入";
-//}
-//
-//- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
-//{
-//    if (editingStyle == UITableViewCellEditingStyleDelete) {
-//        [self joinRoom];
-//    }
-//}
-//// Override to support conditional editing of the table view.
-//- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-//    // Return NO if you do not want the specified item to be editable.
-//    return YES;
-//}
-//
-//// Override to support rearranging the table view.
-//- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-//    
-//}
 
 #pragma mark - table view delegate
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath

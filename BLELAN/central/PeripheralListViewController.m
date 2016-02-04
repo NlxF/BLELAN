@@ -161,7 +161,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         //已经在刷新数据了
     } else {
         if (self.peripheralTableView.contentOffset.y == 0) {
-            
             [UIView animateWithDuration:0.25
                                   delay:0
                                 options:UIViewAnimationOptionBeginFromCurrentState
@@ -174,6 +173,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         }
     }
 }
+
 #pragma mark - touch event
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {

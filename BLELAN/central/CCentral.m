@@ -301,6 +301,9 @@
             //数据传输特性
             [peripheral setNotifyValue:YES forCharacteristic:character];
             _gameCharacteristic = character;
+        }else if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
+            //踢人特性
+            [peripheral setNotifyValue:YES forCharacteristic:character];
         }
     }
     //接下来等待数据到来
@@ -357,6 +360,9 @@
                 [_delegate recvData:(NSData*)recvValue];
             });
         }
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
+        //接到踢掉通知
+        
     }
 }
 

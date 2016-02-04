@@ -200,7 +200,6 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 // 是否能编辑cell.
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    
     return YES;
 }
 
@@ -227,8 +226,9 @@ static NSString *centralCellIdentity = @"CentralListView";
         NSLog(@"Delete at row %ld", (long)indexPath.row);
         [self.centralList removeObjectAtIndex:[indexPath row]];
         [self.myCentralTable deleteRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationTop];
+        NSInteger idx = indexPath.row;
         DISPATCH_GLOBAL(^{
-            [_delegate kickOne:indexPath.row];
+            [_delegate kickOne:idx];
         });
     }
 }

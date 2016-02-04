@@ -25,6 +25,8 @@
 @property (nonatomic, strong) CBMutableCharacteristic *gameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
+@property (nonatomic, strong) CBMutableCharacteristic *tickCharacteristic;
+
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
 @property (nonatomic, strong) NSString *peripheralName;
@@ -240,8 +242,13 @@
                                                                      properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
                                                                           value:nil
                                                                     permissions:CBAttributePermissionsReadable];
+    //踢人特性
+    _tickCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTTICKUUID]
+                                                                             properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
+                                                                                  value:nil
+                                                                            permissions:CBAttributePermissionsReadable];
     //特性添加到服务
-    broadcastService.characteristics   = @[_gameCharacteristic, _nameCharacteristic, _scheduleCharacteristic];
+    broadcastService.characteristics   = @[_gameCharacteristic, _nameCharacteristic, _scheduleCharacteristic, _tickCharacteristic];
 
     //发布服务和特性
     [_peripheralMgr addService:broadcastService];
@@ -292,13 +299,12 @@
             
             //更新tableview
             [_centralTableViewCtrl UpdateCentralList:centralName];
-        }else{
+        }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //具体业务逻辑数据
             NSData *value;
             [[PayloadMgr defaultManager] contentFromPayload:request.characteristic.value out:&value];
             if (value != nil) {
                 [_delegate recvData:value];
-                
                 [self dispatchMessage:value];
             }
         }
@@ -317,6 +323,8 @@
         NSLog(@"订阅调度特性");
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
         NSLog(@"订阅数据传输特性");
+    }else if ([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
+        NSLog(@"订阅踢人特性");
     }
 }
 
@@ -324,9 +332,10 @@
  */
 - (void)peripheralManager:(CBPeripheralManager *)peripheral central:(CBCentral *)central didUnsubscribeFromCharacteristic:(CBCharacteristic *)characteristic
 {
-
     if ([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
         NSLog(@"取消设备名特性订阅");
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
+        NSLog(@"取消踢人特性订阅");
     }else{
         NSLog(@"取消调度或数据传输特性订阅");
         //将中心从中心管理器移除

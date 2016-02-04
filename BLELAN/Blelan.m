@@ -17,9 +17,9 @@
 @interface LightLAN()
 {
     BOOL _isStarted;
-//    BOOL _isStrategy;
-//    NSString *_name;
-//    LightAirType _type;
+    BOOL _isStrategy;
+    NSString *_name;
+    LightAirType _type;
 }
 
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
@@ -49,60 +49,21 @@
 {
     self = [super init];
     if (self) {
-        if (type == PeripheralType) {
-            _peripheral = [[CPeripheral alloc] initWithName:name mode:isStrategy];
-            [_peripheral setAttachedViewController:vc];
-            isCentral = NO;
-        }else{
-            _central = [[CCentral alloc] initWithName:name mode:isStrategy];
-            [_central setAttachedViewController:vc];
-            isCentral = YES;
-        }
         _isStarted = NO;
         _attachedVc = vc;
-//        _type = type;
-//        _name = name;
-//        _isStrategy = isStrategy;
+        _type = type;
+        _name = name;
+        _isStrategy = isStrategy;
+        
+        //添加关闭ROOM通知
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeRoom:) name:CLOSEROOMNOTF object:nil];
     }
     return self;
 }
 
-//- (void)restartWithOldPolicy
-//{
-//    if (_type == PeripheralType) {
-//        _peripheral = [[CPeripheral alloc] initWithName:_name mode:_isStrategy];
-//        [_peripheral setAttachedViewController:_attachedVc];
-//        isCentral = NO;
-//    }else{
-//        _central = [[CCentral alloc] initWithName:_name mode:_isStrategy];
-//        [_central setAttachedViewController:_attachedVc];
-//        isCentral = YES;
-//    }
-//}
-//
-//- (void)restartWithNewPolicy:(LightAirType)type mode:(BOOL)isStrategy
-//{
-//    if (type == PeripheralType) {
-//        _peripheral = [[CPeripheral alloc] initWithName:_name mode:isStrategy];
-//        [_peripheral setAttachedViewController:_attachedVc];
-//        isCentral = NO;
-//    }else{
-//        _central = [[CCentral alloc] initWithName:_name mode:isStrategy];
-//        [_central setAttachedViewController:_attachedVc];
-//        isCentral = YES;
-//    }
-//    _type = type;
-//    _isStrategy = isStrategy;
-//}
-
 - (void)setDelegate:(id<BlelanDelegate>)delegate
 {
     _delegate = delegate;
-    if (isCentral) {
-        [_central setDelegate:delegate];
-    }else{
-        [_peripheral setDelegate:delegate];
-    }
 }
 
 /**
@@ -117,72 +78,68 @@
     BOOL isSuccessed;
     if (data == nil) {
         if (isCentral)
-            _central = nil;
+            self.central = nil;
         else
-            _peripheral = nil;
+            self.peripheral = nil;
         isSuccessed = NO;
     }else{
         if(isCentral)
             //中心经由外设转发
-            isSuccessed = [_central sendData:data];
+            isSuccessed = [self.central sendData:data];
         else
             //外设本身直接发送
-            isSuccessed = [_peripheral sendData:data];
+            isSuccessed = [self.peripheral sendData:data];
     }
     return isSuccessed;
 }
 
+- (void)closeRoom:(NSNotification *)notf
+{
+    NSLog(@"关闭房间");
+    if (isCentral)
+        self.central = nil;
+    else
+        self.peripheral = nil;
+}
+
 #pragma mark -  as a peripheral
-/**
- *  启动设备，作为外设开启广播
- *
+/**  启动设备，作为外设开启广播
  */
 - (void)createRoom:(NSString *)roomName
 {
-    if(!isCentral){
-        [_peripheral startAdvertising:roomName];
-    }else{
-        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
-    }
+    if (self.central)
+        self.central = nil;
+
+    isCentral = NO;
+    self.peripheral = [[CPeripheral alloc] initWithName:_name mode:_isStrategy];
+    [self.peripheral setAttachedViewController:_attachedVc];
+    [self.peripheral setDelegate:_delegate];
+    
+    [self.peripheral startAdvertising:roomName];
 }
 
 - (void)startRoom
 {
-    if(!isCentral){
-        [_peripheral startRoom];
+    if(self.peripheral){
+        [self.peripheral startRoom];
     }else{
         ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
-/**
- *  外设停止广播
- */
-- (void)closeRoom
-{
-    if(!isCentral){
-        [_peripheral stopAdvertising];
-    }else{
-        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能关闭房间");
-    }
-}
 
 #pragma mark - central
+/**扫描ROOM
+ */
 - (void)scanRoom
 {
-    if(isCentral){
-        [_central scan];
-    }else{
-        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为中心启动时才能扫描房间");
-    }
-}
-
-- (void)leaveRoom
-{
-    if(isCentral){
-        [_central leaveRoom];
-    }else{
-        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为中心启动时才能离开房间");
-    }
+    //先释放掉别的
+    if (self.peripheral)
+        self.peripheral = nil;
+    isCentral = YES;
+    self.central = [[CCentral alloc] initWithName:_name mode:_isStrategy];
+    [self.central setAttachedViewController:_attachedVc];
+    [self.central setDelegate:_delegate];
+    [self.central scan];
 }
 @end

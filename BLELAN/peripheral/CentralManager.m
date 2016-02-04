@@ -11,11 +11,13 @@
 @interface CentralManager()
 @end
 
-
 @implementation CentralManager
 
+@synthesize centralsName = _centralsName;
+@synthesize centralsList = _centralsList;
+
 #pragma mark - attributes methods
-- (NSMutableArray *)centralName
+- (NSMutableArray *)centralsName
 {
     if (_centralsName == nil) {
         _centralsName = [[NSMutableArray alloc] init];
@@ -23,7 +25,16 @@
     return _centralsName;
 }
 
-- (NSMutableArray *)centralList
+- (void)setCentralsName:(NSMutableArray<NSString *> *)centralsName
+{
+    @synchronized(self) {
+        if (![_centralsName isEqualToArray:centralsName]) {
+            _centralsName = centralsName;
+        }
+    }
+}
+
+- (NSMutableArray *)centralsList
 {
     if (_centralsList == nil) {
         _centralsList = [[NSMutableArray alloc] init];
@@ -31,15 +42,28 @@
     return _centralsList;
 }
 
-#pragma mark - custome methods
-- (void)addCentral:(CBCentral *)device name:(NSString *)centralName
+- (void)setCentralsList:(NSMutableArray<CBCentral *> *)centralsList
 {
-    if (centralName == nil || device == nil)
-        return;
+    @synchronized(self) {
+        if (![_centralsList isEqualToArray:centralsList]) {
+            _centralsList = centralsList;
+        }
+    }
+}
 
-    [self.centralName addObject:centralName];
-    [self.centralList addObject:device];
-    
+#pragma mark - custome methods
+- (BOOL)addCentral:(CBCentral *)device name:(NSString *)centralName
+{
+    BOOL retVals = NO;
+    if (centralName == nil || device == nil)
+        return retVals;
+
+    if(![self.centralsList containsObject:device]){
+        [self.centralsName addObject:centralName];
+        [self.centralsList addObject:device];
+        retVals = YES;
+    }
+    return retVals;
 }
 
 - (void)removeCentral:(CBCentral *)device
@@ -47,27 +71,32 @@
     NSUInteger idx = -1;
     
     if(device != nil && [self.centralsList containsObject:device]){
-        idx = [self.centralList indexOfObject:device];
+        idx = [self.centralsList indexOfObject:device];
     }
     
     if (idx != -1) {
-        [self.centralName removeObjectAtIndex:idx];
-        [self.centralList removeObjectAtIndex:idx];
+        [self.centralsName removeObjectAtIndex:idx];
+        [self.centralsList removeObjectAtIndex:idx];
     }
 }
 
 
 - (CBCentral *)getCentralByIndex:(NSUInteger)index
 {
-    if (index <= 0)
-        return nil;
-    
-    NSString *deviceName = [self.centralName objectAtIndex:index];
+
+    NSString *deviceName = [self.centralsName objectAtIndex:index];
     if (deviceName == nil) {
         return nil;
     }
     
-    return [self.centralList objectAtIndex:index];
+    return [self.centralsList objectAtIndex:index];
 }
 
+- (NSInteger)indexOfObject:(CBCentral *)central
+{
+    if ([self.centralsList containsObject:central]) {
+        return [self.centralsList indexOfObject:central];
+    }else
+        return -1;
+}
 @end

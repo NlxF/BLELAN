@@ -16,7 +16,7 @@
 
 - (void)startRoom;
 
-- (void)closeRoom;
+//- (void)closeRoom;
 
 - (void)kickOne:(NSUInteger)index;
 

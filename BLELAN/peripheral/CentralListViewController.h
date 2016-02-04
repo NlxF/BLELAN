@@ -20,4 +20,6 @@
 
 - (void)showTableView:(UIViewController *)fView animated:(BOOL)animated;
 
+- (void)deleteAtRow:(NSUInteger)row;
+
 @end

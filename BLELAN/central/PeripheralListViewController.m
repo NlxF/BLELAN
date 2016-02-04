@@ -24,7 +24,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @property (nonatomic, strong) NSString                     *tableTitle;
 
-@property (nonatomic, strong) NSMutableArray<NSValue*>     *peripheralsList;
+@property (atomic   , strong) NSMutableArray<NSValue*>     *peripheralsList;
 
 @property (nonatomic, strong) FBShimmeringView             *fbshimmer;
 
@@ -34,9 +34,11 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 
 @property (nonatomic, strong) NSDate                       *preDate;
 
+@property (nonatomic, strong) PeripheralListViewCell       *selectedCell;
 @end
 
 @implementation PeripheralListViewController
+@synthesize peripheralsList = _peripheralsList;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -82,23 +84,22 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     return self;
 }
 
+#pragma mark - attribute methods
 - (NSMutableArray *)peripheralsList
 {
     if (_peripheralsList == nil) {
         _peripheralsList = [[NSMutableArray alloc] init];
-        
-//        showData data;
-//        strcpy(data.name, "ROOM-1");
-//        data.percentage = 0.5;
-//        NSValue *value = [NSValue valueWithBytes:&data objCType:@encode(showData)];
-//        [_peripheralsList addObject:value];
-//        
-//        strcpy(data.name, "ROOM-2");
-//        data.percentage = 0.5;
-//        value = [NSValue value:&data withObjCType:@encode(showData)];
-//        [_peripheralsList addObject:value];
     }
     return _peripheralsList;
+}
+
+- (void)setPeripheralsList:(NSMutableArray<NSValue *> *)peripheralsList
+{
+    @synchronized(self) {
+        if (![_peripheralsList isEqualToArray:peripheralsList]) {
+            _peripheralsList = peripheralsList;
+        }
+    }
 }
 
 #pragma mark - custom methods
@@ -145,7 +146,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         if (!_fbshimmer.isShimmering) {
             _preDate = [NSDate date];
             
-            [_peripheralsList removeAllObjects];
+            [self.peripheralsList removeAllObjects];
             
             //清空数据
             [_delegate reloadList];
@@ -153,6 +154,15 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
             [_peripheralTableView reloadData];
         }
     });
+}
+
+- (void)stopShimmer
+{
+    if (_fbshimmer.isShimmering) {
+        _selectedCell.textLabel.textColor = CELLCOLOR;
+        _fbshimmer.shimmering = NO;
+        _blur.hidden = YES;
+    }
 }
 
 - (void)refreshList
@@ -182,8 +192,12 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     if(CGRectContainsPoint([Helper titleRect], point) || CGRectContainsPoint([Helper footRect], point))
         return;
     
+    NSLog(@"关闭房间通知");
+    [[NSNotificationCenter defaultCenter] postNotificationName:CLOSEROOMNOTF object:nil];
+    
     //dismiss self
     [Helper fadeOut:self.view];
+    
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
@@ -240,7 +254,7 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     PeripheralListViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    
+    _selectedCell = cell;
     if (cell.selected && _fbshimmer.shimmering) {
         NSLog(@"取消等待");
         cell.textLabel.textColor = CELLCOLOR;
@@ -248,7 +262,9 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         _blur.hidden = YES;
         
         //leave waitting
-        [_delegate leaveRoom];
+        DISPATCH_GLOBAL(^{
+            [_delegate leaveRoom];
+        });
     }else{
         if ([_delegate respondsToSelector:@selector(joinRoom:block:)]) {
             CGRect rect = CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height);

@@ -21,7 +21,7 @@
     NSUInteger currentPlayer;
 }
 
-@property (nonatomic, strong) CBPeripheralManager *peripheralMgr;
+@property (nonatomic, strong) CBPeripheralManager     *peripheralMgr;
 @property (nonatomic, strong) CBMutableCharacteristic *gameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
@@ -197,21 +197,15 @@
     currentPlayer = 1;
 }
 
-- (void)closeRoom
-{
-    NSLog(@"关闭房间");
-    //停止广播
-    [self stopAdvertising];
-    //
-    _peripheralMgr = nil;
-    
-    //清理
-    [self cleanCentralMgr];
-}
-
 - (void)kickOne:(NSUInteger)index
 {
-    
+    CBCentral *theOne = [self.centralsMgr getCentralByIndex:index];
+    NSLog(@"更新%@中心的断线特性", theOne);
+    //更新断线特性
+    NSData *updateData = [KICKIDENTIFITY dataUsingEncoding:NSUTF8StringEncoding];
+    [_peripheralMgr updateValue:updateData forCharacteristic:_tickCharacteristic onSubscribedCentrals:@[theOne]];
+    //将中心从管理器中删除
+    [self.centralsMgr removeCentral:theOne];
 }
 
 #pragma mark - Peripheral Manager Delegate Methods
@@ -242,7 +236,7 @@
                                                                      properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
                                                                           value:nil
                                                                     permissions:CBAttributePermissionsReadable];
-    //踢人特性
+    //断线特性
     _tickCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTTICKUUID]
                                                                              properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
                                                                                   value:nil
@@ -281,7 +275,8 @@
 - (void)peripheralManager:(CBPeripheralManager *)peripheral didReceiveReadRequest:(CBATTRequest *)request
 {
     // 对请求作出成功响应
-    NSLog(@"收到中心度请求");
+    NSLog(@"收到中心请求");
+    
     [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
 }
 
@@ -295,17 +290,31 @@
             NSString *centralName = [[NSString alloc] initWithData:request.value encoding:NSUTF8StringEncoding];
             
             //将设备名存储到中心管理器
-            [_centralsMgr addCentral:request.central name: centralName];
+            if([_centralsMgr addCentral:request.central name: centralName]){
+                //添加成功后更新tableview
+                [_centralTableViewCtrl UpdateCentralList:centralName];
+            }
             
-            //更新tableview
-            [_centralTableViewCtrl UpdateCentralList:centralName];
         }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //具体业务逻辑数据
             NSData *value;
             [[PayloadMgr defaultManager] contentFromPayload:request.characteristic.value out:&value];
             if (value != nil) {
-                [_delegate recvData:value];
+                DISPATCH_GLOBAL(^{
+                    [_delegate recvData:value];
+                });
                 [self dispatchMessage:value];
+            }
+        }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
+            NSString *message = [[NSString alloc] initWithData:request.value encoding:NSUTF8StringEncoding];
+            if ([message isEqualToString:DISCONNECTID]) {
+                DISPATCH_MAIN(^{
+                    //更新UI
+                    [self.centralTableViewCtrl deleteAtRow:[self.centralsMgr indexOfObject:request.central]];
+                    
+                    //将中心从中心管理器移除
+                    [_centralsMgr removeCentral:request.central];
+                });
             }
         }
         [_peripheralMgr respondToRequest:request withResult:CBATTErrorSuccess];
@@ -335,11 +344,11 @@
     if ([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
         NSLog(@"取消设备名特性订阅");
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
-        NSLog(@"取消踢人特性订阅");
+        NSLog(@"取消断线特性订阅");
+    }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
+        NSLog(@"取消数据传输特性订阅");
     }else{
-        NSLog(@"取消调度或数据传输特性订阅");
-        //将中心从中心管理器移除
-        [_centralsMgr removeCentral:central];
+        NSLog(@"取消调度特性订阅");
     }
 }
 

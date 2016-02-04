@@ -21,6 +21,6 @@
 
 - (void)refreshList;
 
-- (void)
+- (void)stopShimmer;
 
 @end

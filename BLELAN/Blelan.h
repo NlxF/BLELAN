@@ -57,20 +57,15 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
-//- (void)restartWithOldPolicy;
-//
-//- (void)restartWithNewPolicy:(LightAirType)type mode:(BOOL)isStrategy;
 
 /***************************peripheral*********************************/
+
 - (void)createRoom:(NSString *)roomName;
 
 - (void)startRoom;
 
-- (void)closeRoom;
-
 /*******************************central*********************************/
-- (void)scanRoom;
 
-- (void)leaveRoom;
+- (void)scanRoom;
 
 @end

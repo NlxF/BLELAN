@@ -17,7 +17,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 @interface CentralListViewController ()
 
-@property (nonatomic, strong) NSMutableArray *centralList;
+@property (atomic   , strong) NSMutableArray *centralList;
 @property (nonatomic, strong) UITableView  *myCentralTable;
 @property (nonatomic, strong) UIView       *titleView;
 @property (nonatomic, strong) NSString     *tableTitle;
@@ -25,6 +25,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 @implementation CentralListViewController
 
+@synthesize centralList = _centralList;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -87,6 +88,15 @@ static NSString *centralCellIdentity = @"CentralListView";
     return _centralList;
 }
 
+- (void)setCentralList:(NSMutableArray *)centralList
+{
+    @synchronized(self) {
+        if (![_centralList isEqualToArray:centralList]) {
+            _centralList = centralList;
+        }
+    }
+}
+
 #pragma mark - custom methods
 - (void)orientationDidChange:(NSNotification *)not
 {
@@ -126,9 +136,8 @@ static NSString *centralCellIdentity = @"CentralListView";
     [Helper fadeOut:self.view];
     
     //close room
-    if ([_delegate respondsToSelector:@selector(closeRoom)]) {
-        [self.delegate closeRoom];
-    }
+    NSLog(@"关闭房间通知");
+    [[NSNotificationCenter defaultCenter] postNotificationName:CLOSEROOMNOTF object:nil];
 }
 
 - (void)startRoom
@@ -162,6 +171,14 @@ static NSString *centralCellIdentity = @"CentralListView";
     }
 }
 
+- (void)deleteAtRow:(NSUInteger)row
+{
+    NSLog(@"删除行:%ld", (long)row);
+    [self.centralList removeObjectAtIndex:row];
+    NSIndexPath *indexPath = [NSIndexPath indexPathWithIndex:row];
+    [self.myCentralTable deleteRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationTop];
+}
+
 #pragma mark - Table view data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -192,7 +209,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 // 排序
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    NSLog(@"move from row %ld to row %ld", (long)fromIndexPath.row, (long)toIndexPath.row);
+    NSLog(@"将行从: %ld 移到行: %ld", (long)fromIndexPath.row, (long)toIndexPath.row);
     [self.centralList exchangeObjectAtIndex:fromIndexPath.row withObjectAtIndex:toIndexPath.row];
     //交换中心设备在管理器中的位置
     [_delegate exchangePosition:fromIndexPath.row to:toIndexPath.row];
@@ -223,7 +240,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath
 {
     if (editingStyle == UITableViewCellEditingStyleDelete){
-        NSLog(@"Delete at row %ld", (long)indexPath.row);
+        NSLog(@"删除行:%ld", (long)indexPath.row);
         [self.centralList removeObjectAtIndex:[indexPath row]];
         [self.myCentralTable deleteRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationTop];
         NSInteger idx = indexPath.row;

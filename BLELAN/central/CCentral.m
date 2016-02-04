@@ -24,7 +24,8 @@
 @property (strong, nonatomic) CBCentralManager             *centralMgr;
 @property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
 @property (strong, nonatomic) CBCharacteristic             *gameCharacteristic;
-@property (strong, nonatomic) NSMutableArray               *allPeripherals;
+@property (strong, nonatomic) CBCharacteristic             *kickCharacteristic;
+@property (strong,    atomic) NSMutableArray               *allPeripherals;
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 @property (strong, nonatomic) NSString                     *centralName;
 @property (nonatomic,   weak) UIViewController             *attachedViewController;
@@ -95,9 +96,6 @@
  */
 - (void)stopScanning
 {
-    //清空外设列表
-    _allPeripherals = nil;
-    
     //停止扫描
     if (_centralMgr.isScanning) {
         [_centralMgr stopScan];
@@ -120,22 +118,30 @@
     }
 }
 
-/*
- * Call this when things either go wrong, or you're done with the connection.
+- (void)bekicked
+{
+    //断开连接
+    [self.centralMgr cancelPeripheralConnection:self.currentPeripheral];
+    //更新界面
+    DISPATCH_MAIN(^{
+        [self.peripheralListView stopShimmer];
+    });
+}
+
+/** Call this when things either go wrong, or you're done with the connection.
  */
 - (void)cleanup
 {
+    NSLog(@"清理订阅");
     for (CBService *service in _currentPeripheral.services) {
         if (service.characteristics != nil) {
             for (CBCharacteristic *characteristic in service.characteristics) {
                 if (characteristic.isNotifying) {
-                    // It is notifying, so unsubscribe
                     [_currentPeripheral setNotifyValue:NO forCharacteristic:characteristic];
                 }
             }
         }
     }
-    _currentPeripheral = nil;
 }
 
 #pragma mark - myCentralDelegate
@@ -154,11 +160,13 @@
 
 - (void)leaveRoom
 {
-    if (_currentPeripheral) {
+    if(_kickCharacteristic && _currentPeripheral){
+        NSData *data = [DISCONNECTID dataUsingEncoding:NSUTF8StringEncoding];
+        [_currentPeripheral writeValue:data forCharacteristic:_kickCharacteristic type:CBCharacteristicWriteWithResponse];
+        
+        [NSThread sleepForTimeInterval:0.5];
         [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     }
-
-    [self cleanup];
 }
 
 - (void)reloadList
@@ -239,6 +247,10 @@
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
     NSLog(@"蓝牙断开, %@", error.localizedDescription);
+    DISPATCH_MAIN(^{
+        [_peripheralListView stopShimmer];
+    });
+    [self cleanup];
     _currentPeripheral = nil;
 }
 
@@ -266,7 +278,7 @@
     NSLog(@"探索感兴趣的服务");
     //继续发现感兴趣的特性
     for(CBService *service in peripheral.services){
-        [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:BROADCASTCHARACTERUUID], [CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]] forService:service];
+        [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:BROADCASTCHARACTERUUID], [CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID], [CBUUID UUIDWithString:BROADCASESCHEDULEUUID], [CBUUID UUIDWithString:BROADCASTTICKUUID]] forService:service];
     }
 }
 
@@ -277,33 +289,37 @@
 {
     if (error) {
         ALERT(_attachedViewController, @"探索特性失败", [error localizedDescription]);
-        [self cleanup];
         return;
     }
+    
     NSLog(@"探索感兴趣的特性");
     for (CBCharacteristic *character in service.characteristics) {
-        NSLog(@"发现特性，UUID=%@,", [character.UUID UUIDString]);
+        NSLog(@"发现特性，%@,", UUIDNAME([character.UUID UUIDString]));
         if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
             //设备名称特性
             NSLog(@"发送中心名，%@", _centralName);
             NSData *centralName = [_centralName dataUsingEncoding:NSUTF8StringEncoding];
             [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithResponse];
-            //订阅，等待游戏开始后设备列表更新
-            NSLog(@"订阅特性，等待开始");
+            //订阅，等待开始后设备列表更新
+            NSLog(@"订阅设备名称特性，等待房主开始");
             [peripheral setNotifyValue:YES forCharacteristic:character];
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
             //调度特性
             if(_isStrategy){
                 //策略类需要订阅调度特性，获取出牌顺序
+                NSLog(@"订阅调度特性");
                 [peripheral setNotifyValue:YES forCharacteristic:character];
             }
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //数据传输特性
+            NSLog(@"订阅数据传输特性");
             [peripheral setNotifyValue:YES forCharacteristic:character];
             _gameCharacteristic = character;
         }else if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
-            //踢人特性
+            //断线特性
+            NSLog(@"订阅断线特性");
             [peripheral setNotifyValue:YES forCharacteristic:character];
+            _kickCharacteristic = character;
         }
     }
     //接下来等待数据到来
@@ -344,7 +360,7 @@
         int idx;
         [value getBytes:&idx length:sizeof(idx)];
         //更新当前出牌对象
-        NSLog(@"当前顺序是 %d", idx);
+        NSLog(@"接收到调度特性更新，当前顺序是 %d", idx);
         currentPlayer = idx;
         //更新调度
         DISPATCH_GLOBAL(^{
@@ -357,12 +373,18 @@
         FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
         if(isGameFrame(frameType)){
             DISPATCH_GLOBAL(^{
+                NSLog(@"接收到数据传输特性更新，%@", recvValue);
                 [_delegate recvData:(NSData*)recvValue];
             });
         }
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
-        //接到踢掉通知
-        
+        //断线通知
+        NSLog(@"接收到断线特性更新");
+        NSData *tickDate = characteristic.value;
+        NSString *tickStr = [[NSString alloc] initWithData:tickDate encoding:NSUTF8StringEncoding];
+        if ([tickStr isEqualToString:KICKIDENTIFITY]) {
+            [self bekicked];
+        }
     }
 }
 
@@ -372,17 +394,13 @@
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error) {
-        NSLog(@"Error changing notification state: %@", error.localizedDescription);
+        NSLog(@"更改订阅的:%@ 状态错误: %@", UUIDNAME([characteristic.UUID UUIDString]), error.localizedDescription);
+        return;
     }
     if (characteristic.isNotifying) {
-        NSLog(@"Notification began on %@", characteristic);
-    }
-    
-    // Notification has stopped
-    else {
-        // so disconnect from the peripheral
-        NSLog(@"Notification stopped on %@.  Disconnecting", characteristic);
-        [_centralMgr cancelPeripheralConnection:peripheral];
+        NSLog(@"已订阅特性：%@", UUIDNAME([characteristic.UUID UUIDString]));
+    }else {
+        NSLog(@"结束订阅特性 %@ ", UUIDNAME([characteristic.UUID UUIDString]));
     }
 }
 
@@ -390,10 +408,10 @@
 - (void)peripheral:(CBPeripheral *)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     if (error) {
-        NSLog(@"写入特性:%@, 出错，%@", [characteristic.UUID UUIDString], error.localizedDescription);
+        NSLog(@"写入特性:%@, 出错，%@", UUIDNAME([characteristic.UUID UUIDString]), error.localizedDescription);
         return;
     }
-    NSLog(@"写入特性:%@, 值=%@", [characteristic.UUID UUIDString], characteristic.value);
+    NSLog(@"写入特性:%@, 上次值=%@", UUIDNAME([characteristic.UUID UUIDString]), characteristic.value);
 }
 
 @end

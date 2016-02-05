@@ -177,7 +177,7 @@
     [self stopAdvertising];
     
     //清理
-    [self cleanCentralMgr];
+    self.centralTableViewCtrl = nil;
     
     //代理返回设备列表名，包括外设+中心
     DISPATCH_GLOBAL(^{
@@ -185,12 +185,17 @@
     });
     
     //将设备列表广播出去
-    for (int idx=0; idx<_centralsMgr.centralsList.count; ++idx) {
-        CBCentral *sendCentral = [_centralsMgr.centralsList objectAtIndex:idx];
+    for (int idx=0; idx<self.centralsMgr.centralsList.count; ++idx) {
+        CBCentral *sendCentral = [self.centralsMgr.centralsList objectAtIndex:idx];
         NSMutableArray *sendData = (NSMutableArray*)[self deviceList];
-        [sendData insertObject:[NSNumber numberWithInt:idx] atIndex:0];
-        NSData *deviceData = [NSKeyedArchiver archivedDataWithRootObject:sendData];
-        [_peripheralMgr updateValue:deviceData forCharacteristic:_nameCharacteristic
+        [sendData insertObject:[NSNumber numberWithInt:idx+2] atIndex:0];
+        //NSData *deviceData = [NSKeyedArchiver archivedDataWithRootObject:sendData];
+        NSMutableString *sendStr = [[NSMutableString alloc] init];
+        for (NSString *name in sendData) {
+            [sendStr appendFormat:@"%@#", name];
+        }
+        NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
+        [self.peripheralMgr updateValue:deviceData forCharacteristic:self.nameCharacteristic
                onSubscribedCentrals:@[sendCentral]];
     }
     //房主首先出牌
@@ -238,9 +243,9 @@
                                                                     permissions:CBAttributePermissionsReadable];
     //断线特性
     _tickCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTTICKUUID]
-                                                                             properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
+                                                                             properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead|CBCharacteristicPropertyWrite
                                                                                   value:nil
-                                                                            permissions:CBAttributePermissionsReadable];
+                                                                            permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
     //特性添加到服务
     broadcastService.characteristics   = @[_gameCharacteristic, _nameCharacteristic, _scheduleCharacteristic, _tickCharacteristic];
 
@@ -294,7 +299,6 @@
                 //添加成功后更新tableview
                 [_centralTableViewCtrl UpdateCentralList:centralName];
             }
-            
         }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //具体业务逻辑数据
             NSData *value;
@@ -311,7 +315,6 @@
                 DISPATCH_MAIN(^{
                     //更新UI
                     [self.centralTableViewCtrl deleteAtRow:[self.centralsMgr indexOfObject:request.central]];
-                    
                     //将中心从中心管理器移除
                     [_centralsMgr removeCentral:request.central];
                 });

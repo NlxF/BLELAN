@@ -145,10 +145,8 @@ static NSString *centralCellIdentity = @"CentralListView";
     // dismiss self
     [Helper fadeOut:self.view];
     
-    //start room
-    if ([_delegate respondsToSelector:@selector(startRoom)]) {
-        [self.delegate startRoom];
-    }
+    //start room通知
+    [[NSNotificationCenter defaultCenter] postNotificationName:STARTROOMNOTF object:nil];
 }
 
 - (void)changeModel:(id)sender
@@ -175,8 +173,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 {
     NSLog(@"删除行:%ld", (long)row);
     [self.centralList removeObjectAtIndex:row];
-    NSIndexPath *indexPath = [NSIndexPath indexPathWithIndex:row];
-    [self.myCentralTable deleteRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationTop];
+    [self.myCentralTable reloadData];
 }
 
 #pragma mark - Table view data source

@@ -197,7 +197,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     
     //dismiss self
     [Helper fadeOut:self.view];
-    
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
@@ -263,34 +262,33 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         
         //leave waitting
         DISPATCH_GLOBAL(^{
+            NSLog(@"离开房间");
             [_delegate leaveRoom];
         });
     }else{
-        if ([_delegate respondsToSelector:@selector(joinRoom:block:)]) {
+        if ([_delegate respondsToSelector:@selector(joinRoom:)]) {
             CGRect rect = CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height);
-            connectBlk blk = ^void(){
-                NSLog(@"等待开始");
-                //Add Blur
-                if (_blur == nil){
-                    _blur = [[FXBlurView alloc] initWithFrame:rect];
-                    _blur.tintColor = [UIColor blackColor];
-                    _blur.blurRadius = 0;
-                    _blur.dynamic = YES;
-                }
-                if(_blur.hidden)
-                    _blur.hidden = NO;
-                cell.textLabel.textColor = [UIColor blackColor];
-                [cell addSubview:_blur];
-                
-                //Add waitting shimmer
-                if(_fbshimmer == nil)
-                    _fbshimmer = [Helper shimmerWithTitle:@"等待房主开始,轻点退出" rect:rect];
-                
-                [_blur addSubview:_fbshimmer];
-                _fbshimmer.shimmering = YES;
-            };
-            blk();
-            [_delegate joinRoom:indexPath.row block:blk];
+            NSLog(@"等待开始");
+            //Add Blur
+            if (_blur == nil){
+                _blur = [[FXBlurView alloc] initWithFrame:rect];
+                _blur.tintColor = [UIColor blackColor];
+                _blur.blurRadius = 0;
+                _blur.dynamic = YES;
+            }
+            if(_blur.hidden)
+                _blur.hidden = NO;
+            cell.textLabel.textColor = [UIColor blackColor];
+            [cell addSubview:_blur];
+            
+            //Add waitting shimmer
+            if(_fbshimmer == nil)
+                _fbshimmer = [Helper shimmerWithTitle:@"等待房主开始,轻点退出" rect:rect];
+            
+            [_blur addSubview:_fbshimmer];
+            _fbshimmer.shimmering = YES;
+            
+            [_delegate joinRoom:indexPath.row];
         }
     }
 }

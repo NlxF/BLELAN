@@ -148,4 +148,11 @@
     
     return fbshimmer;
 }
+
++ (NSString *)trimRight:(NSString *)original component:(NSString *)stuff
+{
+    if ([original hasSuffix:stuff])
+        return [original substringWithRange:NSMakeRange(0, original.length-1)];
+    return original;
+}
 @end

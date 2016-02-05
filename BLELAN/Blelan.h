@@ -62,7 +62,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)createRoom:(NSString *)roomName;
 
-- (void)startRoom;
+//- (void)startRoom;
 
 /*******************************central*********************************/
 

@@ -14,7 +14,7 @@
 
 @protocol myCentralDelegate <NSObject>
 
-- (void)joinRoom:(NSUInteger)row block:(connectBlk)blk;
+- (void)joinRoom:(NSUInteger)row;
 
 - (void)leaveRoom;
 

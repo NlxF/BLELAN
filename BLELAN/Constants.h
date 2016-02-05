@@ -52,7 +52,8 @@ typedef void(^connectBlk)();
 
 /*关闭ROOM通知*/
 #define CLOSEROOMNOTF           @"closeRoomNotifity"
-
+/*开始ROOM通知*/
+#define STARTROOMNOTF            @"startRoomNotifity"
 
 /*表示信号强弱的图名*/
 #define  SIGNALHIGH                   @"high.png"

@@ -31,7 +31,6 @@
 @property (nonatomic,   weak) UIViewController             *attachedViewController;
 @property (nonatomic, assign) BOOL                         isStrategy;
 @property (nonatomic, assign) BOOL                         isPrepare;
-@property (nonatomic,   weak) connectBlk                   blk;
 
 @end
 
@@ -145,7 +144,7 @@
 }
 
 #pragma mark - myCentralDelegate
-- (void)joinRoom:(NSUInteger)row block:(connectBlk)blk
+- (void)joinRoom:(NSUInteger)row
 {
     _currentPeripheral = [self.allPeripherals objectAtIndex:row];
     if (_currentPeripheral) {
@@ -154,8 +153,6 @@
     NSLog(@"连接外设 %@", _currentPeripheral.name);
     
     [self stopScanning];
-    
-    _blk = blk;
 }
 
 - (void)leaveRoom
@@ -164,7 +161,7 @@
         NSData *data = [DISCONNECTID dataUsingEncoding:NSUTF8StringEncoding];
         [_currentPeripheral writeValue:data forCharacteristic:_kickCharacteristic type:CBCharacteristicWriteWithResponse];
         
-        [NSThread sleepForTimeInterval:0.5];
+        [NSThread sleepForTimeInterval:0.9];
         [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     }
 }
@@ -230,10 +227,7 @@
 - (void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
     NSLog(@"连接外设成功");
-    
-    //异步执行界面更新
-    //dispatch_async(dispatch_get_main_queue(), _blk);
-    
+
     //设置代理
     peripheral.delegate = self;
     
@@ -336,24 +330,28 @@
         });
         return;
     }
-    NSLog(@"接收到数据");
+    NSLog(@"%@ 接收到数据", UUIDNAME([characteristic.UUID UUIDString]));
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
-        NSArray *recvData = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
+        NSString *recvStr = [[NSString alloc] initWithData:characteristic.value encoding:NSUTF8StringEncoding];
+        NSString *trimStr = [Helper trimRight:recvStr component:@"#"];
+        NSArray *recvData = [trimStr componentsSeparatedByString:@"#"];
+        //NSArray *recvData = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
         NSLog(@"player列表，%@", recvData);
         NSNumber *num = [recvData objectAtIndex:0];
         selfIndex = num.intValue;
         NSArray *deviceList = [recvData subarrayWithRange:NSMakeRange(1, recvData.count-1)];
         
-        //发起开始通知
+        //返回玩家列表
         DISPATCH_GLOBAL(^{
             [_delegate playersList:deviceList error:nil];
         });
-        
         //获取列表后取消订阅
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
         //房主先出牌
         currentPlayer = 1;
+        //
+        self.peripheralListView = nil;
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
         //更新调度
         NSData *value = characteristic.value;

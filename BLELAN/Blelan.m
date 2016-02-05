@@ -55,8 +55,10 @@
         _name = name;
         _isStrategy = isStrategy;
         
-        //添加关闭ROOM通知
+        //注册关闭ROOM通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeRoom:) name:CLOSEROOMNOTF object:nil];
+        //注册开始通知
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(startRoom:) name:STARTROOMNOTF object:nil];
     }
     return self;
 }
@@ -118,7 +120,7 @@
     [self.peripheral startAdvertising:roomName];
 }
 
-- (void)startRoom
+- (void)startRoom:(NSNotification *)notf
 {
     if(self.peripheral){
         [self.peripheral startRoom];

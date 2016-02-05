@@ -73,4 +73,6 @@ typedef struct
 
 + (FBShimmeringView *)shimmerWithTitle:(NSString *)title rect:(CGRect)rect;
 
++ (NSString *)trimRight:(NSString *)original component:(NSString *)stuff;
+
 @end

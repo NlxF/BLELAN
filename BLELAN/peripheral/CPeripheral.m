@@ -26,6 +26,7 @@
 @property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *tickCharacteristic;
+@property (nonatomic, strong) CBMutableCharacteristic *preCharacteristic;
 
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
@@ -33,6 +34,7 @@
 @property (nonatomic, assign) BOOL  isStrategy;
 @property (nonatomic, strong) CentralListViewController *centralTableViewCtrl;
 @property (nonatomic,   weak) UIViewController *attachedViewController;
+@property (nonatomic, strong) NSData *reSendData;
 @property (nonatomic, assign) BOOL isPrepare;
 
 @end
@@ -107,7 +109,7 @@
  */
 - (NSUInteger)scheduleNextPlayer
 {
-    currentPlayer = currentPlayer > playerNums ? 1 : ++currentPlayer;
+    currentPlayer = currentPlayer >= playerNums ? 1 : currentPlayer++;
     
     return currentPlayer;
 }
@@ -136,19 +138,37 @@
 {
     //将收到的数据转播出去
     FrameType gameType    = MakeGameFrame;
-    for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:1 type:gameType]) {
+    for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]) {
+        _reSendData = value;
+        _preCharacteristic = _gameCharacteristic;
         [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
     }
     //更新当前出牌对象
+    NSLog(@"转发，更新调度");
     NSUInteger nextPlayer = [self scheduleNextPlayer];
     NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
+    _reSendData = data;
+    _preCharacteristic = _scheduleCharacteristic;
     [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
 }
 
-- (BOOL)sendData:(NSData *)data
+- (BOOL)sendData:(NSData *)mesage
 {
     if (currentPlayer == selfIndex || !_isStrategy) {
         //轮到自己出牌
+        _preCharacteristic = _gameCharacteristic;
+        FrameType gameType    = MakeGameFrame;
+        for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]){
+            _reSendData = value;
+            NSLog(@"更新数据传输特性,%@", value);
+            [self.peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+        }
+        //更新当前出牌对象
+        NSLog(@"更新调度");
+        NSUInteger nextPlayer = [self scheduleNextPlayer];
+        NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
+        _reSendData = data;
+        _preCharacteristic = _scheduleCharacteristic;
         [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
         return YES;
     }
@@ -179,12 +199,8 @@
     //清理
     self.centralTableViewCtrl = nil;
     
-    //代理返回设备列表名，包括外设+中心
-    DISPATCH_GLOBAL(^{
-        [_delegate playersList:[self deviceList] error:nil];
-    });
-    
-    //将设备列表广播出去
+    //将角色列表广播出去
+    NSLog(@"广播角色列表");
     for (int idx=0; idx<self.centralsMgr.centralsList.count; ++idx) {
         CBCentral *sendCentral = [self.centralsMgr.centralsList objectAtIndex:idx];
         NSMutableArray *sendData = (NSMutableArray*)[self deviceList];
@@ -195,11 +211,20 @@
             [sendStr appendFormat:@"%@#", name];
         }
         NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
+        _reSendData = deviceData;
+        _preCharacteristic = _nameCharacteristic;
         [self.peripheralMgr updateValue:deviceData forCharacteristic:self.nameCharacteristic
                onSubscribedCentrals:@[sendCentral]];
     }
     //房主首先出牌
     currentPlayer = 1;
+    DISPATCH_GLOBAL(^{
+        [_delegate UpdateScheduleIndex:currentPlayer];
+    });
+    //代理返回设备列表名，包括外设+中心
+    DISPATCH_GLOBAL(^{
+        [_delegate playersList:[self deviceList] error:nil];
+    });
 }
 
 - (void)kickOne:(NSUInteger)index
@@ -208,6 +233,8 @@
     NSLog(@"更新%@中心的断线特性", theOne);
     //更新断线特性
     NSData *updateData = [KICKIDENTIFITY dataUsingEncoding:NSUTF8StringEncoding];
+    _reSendData = updateData;
+    _preCharacteristic = _tickCharacteristic;
     [_peripheralMgr updateValue:updateData forCharacteristic:_tickCharacteristic onSubscribedCentrals:@[theOne]];
     //将中心从管理器中删除
     [self.centralsMgr removeCentral:theOne];
@@ -302,8 +329,8 @@
         }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //具体业务逻辑数据
             NSData *value;
-            [[PayloadMgr defaultManager] contentFromPayload:request.characteristic.value out:&value];
-            if (value != nil) {
+            [[PayloadMgr defaultManager] contentFromPayload:request.value out:&value];
+            if ([value length] != 0) {
                 DISPATCH_GLOBAL(^{
                     [_delegate recvData:value];
                 });
@@ -359,7 +386,8 @@
  */
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
-    
+    NSLog(@"传输队列有可用空间,重新在特性:%@ 发送数据:%@",UUIDNAME([_preCharacteristic.UUID UUIDString]), _reSendData);
+    [self.peripheralMgr updateValue:_reSendData forCharacteristic:self.preCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
 }
 
 

@@ -20,13 +20,12 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
  *  结果回调，用来接收游戏数据或者聊天内容，串行到达。
  */
 @protocol BlelanDelegate <NSObject>
-
-@optional
+@required
 
 - (void)recvData:(NSData *)data;
 
 /**
- *  player列表，外设+中心，当收到此消息时表示房间已开始
+ *  player列表，外设+中心，当收到此消息时表示连接已准备好，可以开始通信
  *
  *  @param list  设备名列表，索引从1开始
  *  @param error 是否出错

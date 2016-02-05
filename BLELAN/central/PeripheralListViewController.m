@@ -20,20 +20,14 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
 @interface PeripheralListViewController ()
 {
 }
+
 @property (nonatomic, strong) UITableView                  *peripheralTableView;
-
 @property (nonatomic, strong) NSString                     *tableTitle;
-
 @property (atomic   , strong) NSMutableArray<NSValue*>     *peripheralsList;
-
 @property (nonatomic, strong) FBShimmeringView             *fbshimmer;
-
 @property (nonatomic, strong) FXBlurView                   *blur;
-
 @property (nonatomic, strong) UIRefreshControl             *refreshControl;
-
 @property (nonatomic, strong) NSDate                       *preDate;
-
 @property (nonatomic, strong) PeripheralListViewCell       *selectedCell;
 @end
 
@@ -163,6 +157,13 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         _fbshimmer.shimmering = NO;
         _blur.hidden = YES;
     }
+}
+
+- (void)fadeOut
+{
+    //dismiss self
+    NSLog(@"淡出");
+    [Helper fadeOut:self.view];
 }
 
 - (void)refreshList

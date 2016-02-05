@@ -10,7 +10,7 @@
 
 @interface PayloadMgr()
 {
-    //发送的总的消息个数,based on 1
+    //发送的总的消息个数
     UInt16 globalIdx;
     //缓存
     char payloadBuff[512];
@@ -37,7 +37,7 @@
 {
     self = [super init];
     if (self) {
-        globalIdx = 1;
+        globalIdx = 0;
         curGlobal = 1;
         memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
@@ -71,6 +71,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
     for (int idx=0; idx < arrCnt; ++idx) {
         NSData *da = [dataArr objectAtIndex:idx];
         Payload payload;
+        memset(&payload, '\0', sizeof(Payload));
         payload.dst = dstIdx;
         payload.src = srcIdx;
         payload.FType = type;
@@ -81,9 +82,9 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
         }else                                                  //       则将local置 0
             payload.local = arrCnt == 1 ? 0 : idx + 1;         //    else
                                                                //       则将local置为 idx+ 1
-        payload.global = globalIdx > 65535 ? 1: globalIdx++;
+        payload.global = globalIdx > 65535 ? 1: ++globalIdx;
         [da getBytes:payload.data length:[da length]];
-        [payloadArray addObject:[NSData dataWithBytes:&payloadArray length:6+[da length]]];
+        [payloadArray addObject:[NSData dataWithBytes:&payload length:7+[da length]]];  //加上头长7
     }
     
     return (NSArray*)payloadArray;

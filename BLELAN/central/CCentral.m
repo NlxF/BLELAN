@@ -336,22 +336,27 @@
         NSString *recvStr = [[NSString alloc] initWithData:characteristic.value encoding:NSUTF8StringEncoding];
         NSString *trimStr = [Helper trimRight:recvStr component:@"#"];
         NSArray *recvData = [trimStr componentsSeparatedByString:@"#"];
-        //NSArray *recvData = [NSKeyedUnarchiver unarchiveObjectWithData:characteristic.value];
         NSLog(@"player列表，%@", recvData);
         NSNumber *num = [recvData objectAtIndex:0];
         selfIndex = num.intValue;
         NSArray *deviceList = [recvData subarrayWithRange:NSMakeRange(1, recvData.count-1)];
-        
         //返回玩家列表
         DISPATCH_GLOBAL(^{
             [_delegate playersList:deviceList error:nil];
+        });
+        //淡出
+        DISPATCH_MAIN(^{
+            [self.peripheralListView fadeOut];
+            self.peripheralListView = nil;
         });
         //获取列表后取消订阅
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
         //房主先出牌
         currentPlayer = 1;
-        //
-        self.peripheralListView = nil;
+        //调度
+        DISPATCH_GLOBAL(^{
+            [_delegate UpdateScheduleIndex:currentPlayer];
+        });
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
         //更新调度
         NSData *value = characteristic.value;

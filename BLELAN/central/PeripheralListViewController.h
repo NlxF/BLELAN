@@ -23,4 +23,6 @@
 
 - (void)stopShimmer;
 
+- (void)fadeOut;
+
 @end

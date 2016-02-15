@@ -92,10 +92,11 @@ typedef struct
  *
  *  @param payload 帧数据
  *  @param retValue 有效数据或者nil，当为nil时，表示分帧还未全部到达。
+ *  @param src   源的索引
  *
  *  @return content类型，可能为字符串或者业务逻辑数据
  */
-- (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue;
+- (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue src:(NSUInteger *)src;
 
 
 @end

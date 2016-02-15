@@ -343,6 +343,12 @@
         //返回玩家列表
         DISPATCH_GLOBAL(^{
             [_delegate playersList:deviceList error:nil];
+            //房主先出牌
+            currentPlayer = 1;
+            //更新调度
+            DISPATCH_GLOBAL(^{
+                [_delegate UpdateScheduleIndex:currentPlayer];
+            });
         });
         //淡出
         DISPATCH_MAIN(^{
@@ -351,29 +357,24 @@
         });
         //获取列表后取消订阅
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
-        //房主先出牌
-        currentPlayer = 1;
-        //调度
-        DISPATCH_GLOBAL(^{
-            [_delegate UpdateScheduleIndex:currentPlayer];
-        });
+        
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
         //更新调度
         NSData *value = characteristic.value;
         int idx;
         [value getBytes:&idx length:sizeof(idx)];
-        //更新当前出牌对象
         NSLog(@"接收到调度特性更新，当前顺序是 %d", idx);
         currentPlayer = idx;
         //更新调度
         DISPATCH_GLOBAL(^{
-            [_delegate UpdateScheduleIndex:idx];
+            [_delegate UpdateScheduleIndex:currentPlayer];
         });
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
         //接收外设数据
         NSData *data = characteristic.value;
         id recvValue;
-        FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue];
+        NSUInteger src = 0;
+        FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue src:&src];
         if(isGameFrame(frameType)){
             DISPATCH_GLOBAL(^{
                 NSLog(@"接收到数据传输特性更新，%@", recvValue);

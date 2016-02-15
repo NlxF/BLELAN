@@ -103,7 +103,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
 }
 
 
-- (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue
+- (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue src:(NSUInteger *)src
 {
     Payload p;
     NSData *retData;
@@ -125,6 +125,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
     }
     FrameType retType;
     if (isNotify) {
+        *src = p.src;
         retData = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];
         if (isGameFrame(p.FType)) {
             FrameType tmp = MakeGameFrame;

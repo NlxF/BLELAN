@@ -91,22 +91,22 @@
     for (int idx = 1; idx < playerList.count; idx++) {
         [self AddRow:[NSString stringWithFormat:@"角色:%@", playerList[idx]]];
     }
-    
-    //外设先发
-    if (!_ligjtair->isCentral) {
-        NSLog(@"外设首发");
-        if([_ligjtair sendData:[@"Hello World!" dataUsingEncoding:NSUTF8StringEncoding]])
-            [self AddRow:@"发送数据:Hello World!"];
-    }
 }
 
 - (void)UpdateScheduleIndex:(NSUInteger)idx
 {
     [self AddRow:[NSString stringWithFormat:@"当前顺序:%lu", (unsigned long)idx]];
     
-    NSString *sendData = [NSString stringWithFormat:@"%@#", self.recvData];
-    if([_ligjtair sendData:[sendData dataUsingEncoding:kCFStringEncodingUTF8]]){
-        [self AddRow:[NSString stringWithFormat:@"发送数据:%@", sendData]];
+    //外设先发
+    if (!_ligjtair->isCentral && [self.recvData length] == 0) {
+        NSLog(@"外设首发");
+        if([_ligjtair sendData:[@"Hello World!" dataUsingEncoding:NSUTF8StringEncoding]])
+            [self AddRow:@"发送数据:Hello World!"];
+    }else{
+        NSString *sendData = [NSString stringWithFormat:@"%@#", self.recvData];
+        if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]]){
+            [self AddRow:[NSString stringWithFormat:@"发送数据:%@", sendData]];
+        }
     }
 }
 

@@ -54,15 +54,19 @@
     });
 }
 
+static NSString *sendData;
+
 - (void)startAsPeripheral
 {
     if (_ligjtair == nil) {
         _ligjtair = [[LightLAN alloc] initWithType:PeripheralType name:@"player-1" attached:self mode:YES];
         [_ligjtair setDelegate:self];
+        [_ligjtair setWaitTime:0.1];
     }
     
     [_ligjtair createRoom:@"ROOM-3"];
     _textView.text = @"As Peripheral:\n\n";
+    sendData = @"12345678901234567890123456789012345678901234567890123456789012345678901234567890";
     rowIdx = 1;
 }
 
@@ -71,10 +75,12 @@
     if (_ligjtair == nil) {
         _ligjtair = [[LightLAN alloc] initWithType:CentralType name:@"player-3" attached:self mode:YES];
         [_ligjtair setDelegate:self];
+        [_ligjtair setWaitTime:0.1];
     }
     
     [_ligjtair scanRoom];
     _textView.text = @"As Central:\n\n";
+    sendData = @"";
     rowIdx = 1;
 }
 
@@ -82,8 +88,8 @@
 #pragma mark - BlelanDelegate
 - (void)recvData:(NSData *)data
 {
-    self.recvData = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-    [self AddRow:[NSString stringWithFormat:@"接收数据:%@", self.recvData]];
+    sendData = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    [self AddRow:[NSString stringWithFormat:@"接收数据:%@", sendData]];
 }
 
 - (void)playersList:(NSArray<NSString*> *)playerList error:(NSError*)error
@@ -93,21 +99,18 @@
     }
 }
 
-- (void)UpdateScheduleIndex:(NSUInteger)idx
+
+- (void)UpdateScheduleIndex:(NSUInteger)currentIndex selfIndex:(NSUInteger)selfIndex
 {
-    [self AddRow:[NSString stringWithFormat:@"当前顺序:%lu", (unsigned long)idx]];
+    [self AddRow:[NSString stringWithFormat:@"当前顺序:%lu", (unsigned long)currentIndex]];
     
-    //外设先发
-    if (!_ligjtair->isCentral && [self.recvData length] == 0) {
-        NSLog(@"外设首发");
-        if([_ligjtair sendData:[@"Hello World!" dataUsingEncoding:NSUTF8StringEncoding]])
-            [self AddRow:@"发送数据:Hello World!"];
-    }else{
-        NSString *sendData = [NSString stringWithFormat:@"%@#", self.recvData];
-        if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]]){
-            [self AddRow:[NSString stringWithFormat:@"发送数据:%@", sendData]];
-        }
+    //外设首发
+    if (currentIndex == selfIndex) {
+        sendData = [NSString stringWithFormat:@"%@#", sendData];
+        if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]])
+            [self AddRow:[[NSString alloc] initWithFormat:@"发送数据:%@", sendData]];
     }
+
 }
 
 @end

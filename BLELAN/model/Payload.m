@@ -10,14 +10,14 @@
 
 @interface PayloadMgr()
 {
-    //发送的总的消息个数
+    //发送的总的payload个数
     UInt16 globalIdx;
     //缓存
     char payloadBuff[512];
-    //是否发通知
+    //是否返回值
     bool isNotify;
     //当前帧global索引
-    UInt16 curGlobal;
+    //UInt16 curGlobal;
 }
 @end
 
@@ -38,7 +38,7 @@
     self = [super init];
     if (self) {
         globalIdx = 0;
-        curGlobal = 1;
+        //curGlobal = 1;
         memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
     }
@@ -115,12 +115,14 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
     }else{
         if (isFinish(p.local)){
             isNotify = YES;
-        }else if(p.local == 1)
-            curGlobal = p.global;
-        
-        if (curGlobal == p.local) {
-            strcat(payloadBuff, p.data);
         }
+//        else if(p.local == 1)
+//            curGlobal = p.global;
+//        
+//        if (curGlobal == p.local) {
+//            strcat(payloadBuff, p.data);
+//        }
+        strcat(payloadBuff, p.data);
         
     }
     FrameType retType;

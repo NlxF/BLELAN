@@ -18,6 +18,7 @@
 {
     BOOL _isStarted;
     BOOL _isStrategy;
+    float _waitTime;
     NSString *_name;
     LightAirType _type;
 }
@@ -54,6 +55,7 @@
         _type = type;
         _name = name;
         _isStrategy = isStrategy;
+        _waitTime = 5.0;
         
         //注册关闭ROOM通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeRoom:) name:CLOSEROOMNOTF object:nil];
@@ -85,6 +87,7 @@
             self.peripheral = nil;
         isSuccessed = NO;
     }else{
+        [NSThread sleepForTimeInterval:_waitTime];
         if(isCentral)
             //中心经由外设转发
             isSuccessed = [self.central sendData:data];
@@ -104,6 +107,13 @@
         self.peripheral = nil;
 }
 
+- (void)setWaitTime:(float)utime
+{
+    if (utime > 0) {
+        _waitTime = utime;
+    }
+}
+
 #pragma mark -  as a peripheral
 /**  启动设备，作为外设开启广播
  */
@@ -113,6 +123,7 @@
         self.central = nil;
 
     isCentral = NO;
+    selfIndex = 1;
     self.peripheral = [[CPeripheral alloc] initWithName:_name mode:_isStrategy];
     [self.peripheral setAttachedViewController:_attachedVc];
     [self.peripheral setDelegate:_delegate];

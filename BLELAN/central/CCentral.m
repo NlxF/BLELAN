@@ -347,7 +347,7 @@
             currentPlayer = 1;
             //更新调度
             DISPATCH_GLOBAL(^{
-                [_delegate UpdateScheduleIndex:currentPlayer];
+                [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
             });
         });
         //淡出
@@ -359,7 +359,7 @@
         [peripheral setNotifyValue:NO forCharacteristic:characteristic];
         
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
-        //更新调度
+        //接收数据传输特性的更新后才接受调度特性更新
         NSData *value = characteristic.value;
         int idx;
         [value getBytes:&idx length:sizeof(idx)];
@@ -367,15 +367,15 @@
         currentPlayer = idx;
         //更新调度
         DISPATCH_GLOBAL(^{
-            [_delegate UpdateScheduleIndex:currentPlayer];
+            [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
         });
     }else if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
-        //接收外设数据
+        //接收数据传输特性的更新
         NSData *data = characteristic.value;
         id recvValue;
         NSUInteger src = 0;
-        FrameType frameType = [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue src:&src];
-        if(isGameFrame(frameType)){
+        [[PayloadMgr defaultManager] contentFromPayload:data out:&recvValue src:&src];
+        if([recvValue length] != 0)/*(isGameFrame(frameType))*/{
             DISPATCH_GLOBAL(^{
                 NSLog(@"接收到数据传输特性更新，%@", recvValue);
                 [_delegate recvData:(NSData*)recvValue];

@@ -34,7 +34,7 @@
 
 - (void)setAttachedViewController:(UIViewController *)fvc;
 
-- (void)dispatchMessage:(NSData *)mesage;
+- (void)dispatchMessage:(NSData *)mesage from:(NSUInteger)src;
 
 - (void)cleanCentralMgr;
 

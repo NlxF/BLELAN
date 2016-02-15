@@ -35,9 +35,10 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 /**
  *  当为策略类型时，返回当前操作者索引，基于playerList
  *
- *  @param idx 索引
+ *  @param currentIndex 当前动作角色索引
+ *  @param selfIndex    角色索引
  */
-- (void)UpdateScheduleIndex:(NSUInteger)idx;
+- (void)UpdateScheduleIndex:(NSUInteger)currentIndex selfIndex:(NSUInteger)selfIndex;
 
 @end
 
@@ -46,6 +47,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 {
     @public
     BOOL  isCentral;
+    NSUInteger selfIndex;
 }
 
 /*******************************common*********************************/
@@ -56,6 +58,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
+- (void)setWaitTime:(float)utime;
 
 /***************************peripheral*********************************/
 

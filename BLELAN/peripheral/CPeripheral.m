@@ -14,7 +14,7 @@
 #import "CentralManager.h"
 #import "CentralListViewController.h"
 
-#define UseToReSendIfQueueisFull(character, data) {_preCharacteristic=character;_reSendData=data;}
+#define UseToReSendIfQueueisFull(notify, character, data) {_notifyCentrals=notify;_preCharacteristic=character;_reSendData=data;}
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 {
@@ -29,6 +29,7 @@
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *tickCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *preCharacteristic;
+@property (nonatomic, strong) NSArray* notifyCentrals;
 
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
@@ -141,16 +142,16 @@
 {
     //将收到的数据转播出去
     if([_centralsMgr.centralsList count] > 1){
+        src -= 2;       //角色列表中第0为NULL，第1为外设
+        NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:_centralsMgr.centralsList];
+        [notifyCentral removeObjectAtIndex:src];
         FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType]) {
-            UseToReSendIfQueueisFull(_gameCharacteristic, value)
-            NSMutableArray *notifyCentral = [_centralsMgr.centralsList copy];
-            src -= 2;       //角色列表中第0为NULL，第1为外设
-            [notifyCentral removeObjectAtIndex:src];
-            _isSended = [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:notifyCentral];
+            UseToReSendIfQueueisFull((NSArray*)notifyCentral, _gameCharacteristic, value)
+            _isSended = [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:_notifyCentrals];
             while (!_isSended) {
                 NSLog(@"在特性:%@ 转发数据给中心:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]), notifyCentral);
-                [NSThread sleepForTimeInterval:0.1];
+                [NSThread sleepForTimeInterval:1];
             }
         }
     }
@@ -160,8 +161,9 @@
     NSUInteger nextPlayer = [self scheduleNextPlayer];
     NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
 
-    UseToReSendIfQueueisFull(_scheduleCharacteristic, data)
-    [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+    UseToReSendIfQueueisFull((NSArray*)_centralsMgr.centralsList, _scheduleCharacteristic, data)
+    [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_notifyCentrals];
+    
     //更新调度
     DISPATCH_GLOBAL(^{
         [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
@@ -174,9 +176,9 @@
         //轮到自己出牌
         FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]){
-            UseToReSendIfQueueisFull(_gameCharacteristic, value)
+            UseToReSendIfQueueisFull(_centralsMgr.centralsList, _gameCharacteristic, value)
             NSLog(@"更新数据传输特性,%@", value);
-            _isSended = [self.peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+            _isSended = [self.peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_notifyCentrals];
             while (!_isSended) {
                 NSLog(@"发送特性:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]));
                 [NSThread sleepForTimeInterval:0.1];
@@ -187,8 +189,8 @@
         NSUInteger nextPlayer = [self scheduleNextPlayer];
         NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
     
-        UseToReSendIfQueueisFull(_scheduleCharacteristic, data)
-        [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+        UseToReSendIfQueueisFull(_centralsMgr.centralsList, _scheduleCharacteristic, data)
+        [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_notifyCentrals];
         //更新调度
         DISPATCH_GLOBAL(^{
             [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
@@ -234,9 +236,13 @@
             [sendStr appendFormat:@"%@#", name];
         }
         NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
-        UseToReSendIfQueueisFull(_nameCharacteristic, deviceData)
-        [self.peripheralMgr updateValue:deviceData forCharacteristic:self.nameCharacteristic
-               onSubscribedCentrals:@[sendCentral]];
+        UseToReSendIfQueueisFull(@[sendCentral], _nameCharacteristic, deviceData)
+        _isSended = [self.peripheralMgr updateValue:deviceData forCharacteristic:self.nameCharacteristic
+               onSubscribedCentrals:_notifyCentrals];
+        while (!_isSended) {
+            NSLog(@"在特性:%@ 广播角色队列时传输队列已满", UUIDNAME([self.nameCharacteristic.UUID UUIDString]));
+            [NSThread sleepForTimeInterval:0.1];
+        }
     }
     //代理返回设备列表名，包括外设+中心
     DISPATCH_GLOBAL(^{
@@ -256,8 +262,8 @@
     //更新断线特性
     NSData *updateData = [KICKIDENTIFITY dataUsingEncoding:NSUTF8StringEncoding];
 
-    UseToReSendIfQueueisFull(_tickCharacteristic, updateData)
-    [_peripheralMgr updateValue:updateData forCharacteristic:_tickCharacteristic onSubscribedCentrals:@[theOne]];
+    UseToReSendIfQueueisFull(@[theOne], _tickCharacteristic, updateData)
+    [_peripheralMgr updateValue:updateData forCharacteristic:_tickCharacteristic onSubscribedCentrals:_notifyCentrals];
     //将中心从管理器中删除
     [self.centralsMgr removeCentral:theOne];
 }
@@ -411,7 +417,7 @@
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
     NSLog(@"传输队列有可用空间,重新在特性:%@ 发送数据:%@",UUIDNAME([_preCharacteristic.UUID UUIDString]), _reSendData);
-    _isSended = [self.peripheralMgr updateValue:_reSendData forCharacteristic:self.preCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
+    _isSended = [self.peripheralMgr updateValue:_reSendData forCharacteristic:_preCharacteristic onSubscribedCentrals:_notifyCentrals];
 }
 
 

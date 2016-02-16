@@ -147,7 +147,11 @@
             NSMutableArray *notifyCentral = [_centralsMgr.centralsList copy];
             src -= 2;       //角色列表中第0为NULL，第1为外设
             [notifyCentral removeObjectAtIndex:src];
-            [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:notifyCentral];
+            _isSended = [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:notifyCentral];
+            while (!_isSended) {
+                NSLog(@"在特性:%@ 转发数据给中心:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]), notifyCentral);
+                [NSThread sleepForTimeInterval:0.1];
+            }
         }
     }
     
@@ -174,7 +178,7 @@
             NSLog(@"更新数据传输特性,%@", value);
             _isSended = [self.peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_centralsMgr.centralsList];
             while (!_isSended) {
-                NSLog(@"传输队列已满");
+                NSLog(@"发送特性:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]));
                 [NSThread sleepForTimeInterval:0.1];
             }
         }

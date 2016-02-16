@@ -66,7 +66,7 @@ static NSString *sendData;
     
     [_ligjtair createRoom:@"ROOM-3"];
     _textView.text = @"As Peripheral:\n\n";
-    sendData = @"12345678901234567890123456789012345678901234567890123456789012345678901234567890";
+    sendData = @"12345678901234567890123456789012345678901234567890";
     rowIdx = 1;
 }
 

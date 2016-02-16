@@ -142,16 +142,15 @@
 {
     //将收到的数据转播出去
     if([_centralsMgr.centralsList count] > 1){
-        src -= 2;       //角色列表中第0为NULL，第1为外设
         NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:_centralsMgr.centralsList];
-        [notifyCentral removeObjectAtIndex:src];
+        [notifyCentral removeObjectAtIndex:src-2];        //角色列表中第0为NULL，第1为外设
         FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType]) {
             UseToReSendIfQueueisFull((NSArray*)notifyCentral, _gameCharacteristic, value)
-            _isSended = [_peripheralMgr updateValue:value forCharacteristic:_gameCharacteristic onSubscribedCentrals:_notifyCentrals];
+            _isSended = [_peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_notifyCentrals];
             while (!_isSended) {
                 NSLog(@"在特性:%@ 转发数据给中心:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]), notifyCentral);
-                [NSThread sleepForTimeInterval:1];
+                [NSThread sleepForTimeInterval:0.1];
             }
         }
     }
@@ -363,7 +362,9 @@
                     [_delegate recvData:value];
                 });
                 NSLog(@"收到中心数据：%@", [[NSString alloc] initWithData:value encoding:NSUTF8StringEncoding]);
-                [self dispatchMessage:value from:src];
+                DISPATCH_GLOBAL(^{
+                    [self dispatchMessage:value from:src];
+                });
             }
         }else if([request.characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTTICKUUID]]){
             NSString *message = [[NSString alloc] initWithData:request.value encoding:NSUTF8StringEncoding];

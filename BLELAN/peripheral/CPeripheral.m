@@ -40,6 +40,9 @@
 @property (nonatomic, strong) NSData *reSendData;
 @property (nonatomic, assign) BOOL isPrepare;
 @property (nonatomic, assign) BOOL isSended;
+
+@property (nonatomic, strong) NSMutableArray *queue;
+
 @end
 
 
@@ -204,6 +207,42 @@
     NSLog(@"清理中心管理器");
     _centralsMgr.centralsList = nil;
     _centralsMgr.centralsName = nil;
+}
+
+#pragma mark - queue
+- (void)updateCharacteristics:(CBMutableCharacteristic*)character withValue:(NSData*)value to:(NSArray*)notifyObjs
+{
+    @synchronized(self.queue) {
+        if (self.queue == nil) {
+            self.queue = [NSMutableArray new];
+        }
+    }
+    @synchronized(self.queue) {
+        [self.queue addObject:@{@"": character, @"": value, @"": notifyObjs}];
+    }
+    [self processCharacteristicsUpdateQueue];
+}
+
+- (BOOL)updateCharacteristic:(NSDictionary*)queueData
+{
+    return [self.peripheralMgr updateValue:[queueData objectForKey:@""] forCharacteristic:[queueData objectForKey:@""] onSubscribedCentrals:[queueData objectForKey:@""]];
+    
+}
+
+- (void)processCharacteristicsUpdateQueue
+{
+    NSDictionary *queueData = [self.queue firstObject];
+    if (queueData != nil) {
+        while ([self updateCharacteristic:queueData]) {
+            @synchronized(self.queue) {
+                [self.queue removeObjectAtIndex:0];
+            }
+            queueData = [self.queue firstObject];
+            if (queueData == nil) {
+                break;
+            }
+        }
+    }
 }
 
 #pragma mark - myPeripheralDelegate

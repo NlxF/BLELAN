@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		572DD3371C51CE91007368E6 /* comm.h in Headers */ = {isa = PBXBuildFile; fileRef = 57CEABAA1C4E2C790064B3AB /* comm.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		575530A51C5B6C4B002FD82B /* high.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A21C5B6C4B002FD82B /* high.png */; };
 		575530A61C5B6C4B002FD82B /* low.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A31C5B6C4B002FD82B /* low.png */; };
 		575530A71C5B6C4B002FD82B /* middle.png in Resources */ = {isa = PBXBuildFile; fileRef = 575530A41C5B6C4B002FD82B /* middle.png */; };
@@ -26,7 +25,6 @@
 		578191A21C608BB5003E9F0B /* FXBlurView.m in Sources */ = {isa = PBXBuildFile; fileRef = 5781919B1C608BB5003E9F0B /* FXBlurView.m */; };
 		57A6E37F1C48E7DA00902F01 /* Blelan.h in Headers */ = {isa = PBXBuildFile; fileRef = 57A6E37E1C48E7DA00902F01 /* Blelan.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		57CEABA51C4E23E10064B3AB /* Blelan.m in Sources */ = {isa = PBXBuildFile; fileRef = 57CEABA41C4E23E10064B3AB /* Blelan.m */; };
-		57CEABAB1C4E2C790064B3AB /* comm.h in Sources */ = {isa = PBXBuildFile; fileRef = 57CEABAA1C4E2C790064B3AB /* comm.h */; };
 		7A9D0A751C49D6BF006F1F71 /* CentralManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A731C49D6BF006F1F71 /* CentralManager.h */; };
 		7A9D0A761C49D6BF006F1F71 /* CentralManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A9D0A741C49D6BF006F1F71 /* CentralManager.m */; };
 		7A9D0A791C49DE8F006F1F71 /* CPeripheral.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A771C49DE8F006F1F71 /* CPeripheral.h */; };
@@ -69,7 +67,6 @@
 		57A6E37E1C48E7DA00902F01 /* Blelan.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Blelan.h; sourceTree = "<group>"; };
 		57A6E3801C48E7DA00902F01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		57CEABA41C4E23E10064B3AB /* Blelan.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Blelan.m; sourceTree = "<group>"; };
-		57CEABAA1C4E2C790064B3AB /* comm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = comm.h; sourceTree = "<group>"; };
 		7A9D0A731C49D6BF006F1F71 /* CentralManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CentralManager.h; path = peripheral/CentralManager.h; sourceTree = "<group>"; };
 		7A9D0A741C49D6BF006F1F71 /* CentralManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CentralManager.m; path = peripheral/CentralManager.m; sourceTree = "<group>"; };
 		7A9D0A771C49DE8F006F1F71 /* CPeripheral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CPeripheral.h; path = peripheral/CPeripheral.h; sourceTree = "<group>"; };
@@ -187,7 +184,6 @@
 				7A9D0A711C49D568006F1F71 /* As a Central */,
 				57A6E37E1C48E7DA00902F01 /* Blelan.h */,
 				57CEABA41C4E23E10064B3AB /* Blelan.m */,
-				57CEABAA1C4E2C790064B3AB /* comm.h */,
 				57A6E3801C48E7DA00902F01 /* Info.plist */,
 			);
 			path = BLELAN;
@@ -267,7 +263,6 @@
 				5781919D1C608BB5003E9F0B /* FBShimmeringLayer.h in Headers */,
 				7AD706A71C5A66AE00645F61 /* PeripheralListView.h in Headers */,
 				5781919F1C608BB5003E9F0B /* FBShimmeringView.h in Headers */,
-				572DD3371C51CE91007368E6 /* comm.h in Headers */,
 				5781919C1C608BB5003E9F0B /* FBShimmering.h in Headers */,
 				7A9D0A7D1C49DEC7006F1F71 /* CCentral.h in Headers */,
 				7A9D0A791C49DE8F006F1F71 /* CPeripheral.h in Headers */,
@@ -358,7 +353,6 @@
 				7A9D0A941C4A9515006F1F71 /* PeripheralListViewController.m in Sources */,
 				57CEABA51C4E23E10064B3AB /* Blelan.m in Sources */,
 				7A9D0A7E1C49DEC7006F1F71 /* CCentral.m in Sources */,
-				57CEABAB1C4E2C790064B3AB /* comm.h in Sources */,
 				5781919E1C608BB5003E9F0B /* FBShimmeringLayer.m in Sources */,
 				578191A21C608BB5003E9F0B /* FXBlurView.m in Sources */,
 				7A9D0A761C49D6BF006F1F71 /* CentralManager.m in Sources */,

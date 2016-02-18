@@ -59,21 +59,21 @@ static NSString *sendData;
 - (void)startAsPeripheral
 {
     if (_ligjtair == nil) {
-        _ligjtair = [[LightLAN alloc] initWithType:PeripheralType name:@"player-1" attached:self mode:YES];
+        _ligjtair = [[LightLAN alloc] initWithName:@"player-1" attached:self];
         [_ligjtair setDelegate:self];
         [_ligjtair setWaitTime:0.1];
     }
     
     [_ligjtair createRoom:@"ROOM-3"];
     _textView.text = @"As Peripheral:\n\n";
-    sendData = @"12345678901234567890123456789012345678901234567890";
+    sendData = @"1";//2345678901234567890123456789012345678901234567890";
     rowIdx = 1;
 }
 
 - (void)startAsCentral
 {
     if (_ligjtair == nil) {
-        _ligjtair = [[LightLAN alloc] initWithType:CentralType name:@"player-3" attached:self mode:YES];
+        _ligjtair = [[LightLAN alloc] initWithName:@"player-3" attached:self];
         [_ligjtair setDelegate:self];
         [_ligjtair setWaitTime:0.1];
     }

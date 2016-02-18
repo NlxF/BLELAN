@@ -29,7 +29,7 @@
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 @property (strong, nonatomic) NSString                     *centralName;
 @property (nonatomic,   weak) UIViewController             *attachedViewController;
-@property (nonatomic, assign) BOOL                         isStrategy;
+//@property (nonatomic, assign) BOOL                         isStrategy;
 @property (nonatomic, assign) BOOL                         isPrepare;
 
 @end
@@ -37,7 +37,7 @@
 @implementation CCentral
 
 #pragma mark - CCentral methods
-- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc
 {
     self = [super init];
     if (self) {
@@ -52,23 +52,22 @@
         //中心名，用于在外设显示
         _centralName = name;
         
-        //模式
-        _isStrategy = isStrategy;
-        
         //是否准备好扫描
         _isPrepare = NO;
+        
+        _attachedViewController = rootvc;
     }
     return self;
+}
+
+- (void)dealloc
+{
+    NSLog(@"析构 central对象");
 }
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate
 {
     _delegate = delegate;
-}
-
-- (void)setAttachedViewController:(UIViewController *)fvc
-{
-    _attachedViewController = fvc;
 }
 
 
@@ -104,8 +103,8 @@
 
 - (BOOL)sendData:(NSData *)message
 {
-    if ((_isStrategy && currentPlayer == selfIndex) || !_isStrategy) {
-        //轮到自己出牌,或者竞技类不需要调度
+    if (currentPlayer == selfIndex) {
+        //轮到自己出牌
         FrameType gameType = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:message dst:1 src:selfIndex type:gameType]) {
             [_currentPeripheral writeValue:value forCharacteristic:_gameCharacteristic type:CBCharacteristicWriteWithResponse];
@@ -298,12 +297,9 @@
             NSLog(@"订阅设备名称特性，等待房主开始");
             [peripheral setNotifyValue:YES forCharacteristic:character];
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]]){
-            //调度特性
-            if(_isStrategy){
-                //策略类需要订阅调度特性，获取出牌顺序
-                NSLog(@"订阅调度特性");
-                [peripheral setNotifyValue:YES forCharacteristic:character];
-            }
+            //调度特性，获取出牌顺序
+            NSLog(@"订阅调度特性");
+            [peripheral setNotifyValue:YES forCharacteristic:character];
         }else if([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]]){
             //数据传输特性
             NSLog(@"订阅数据传输特性");

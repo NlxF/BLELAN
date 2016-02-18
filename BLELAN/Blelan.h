@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "comm.h"
 
 //! Project version number for BLELAN.
 FOUNDATION_EXPORT double BLELANVersionNumber;
@@ -45,14 +44,11 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 @interface LightLAN : NSObject
 {
-    @public
-    BOOL  isCentral;
-    NSUInteger selfIndex;
 }
 
 /*******************************common*********************************/
 
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name attached:(UIViewController *)vc mode:(BOOL)isStrategy;
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)root;
 
 - (BOOL)sendData:(NSData *)data;
 
@@ -63,8 +59,6 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 /***************************peripheral*********************************/
 
 - (void)createRoom:(NSString *)roomName;
-
-//- (void)startRoom;
 
 /*******************************central*********************************/
 

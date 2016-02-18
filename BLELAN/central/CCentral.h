@@ -24,7 +24,7 @@
 
 @interface CCentral : NSObject <CentralDelegate, myCentralDelegate>
 
-- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc;
 
 - (void)scan;
 

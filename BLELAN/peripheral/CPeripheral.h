@@ -16,23 +16,19 @@
 
 - (void)startRoom;
 
-//- (void)closeRoom;
-
 - (void)kickOne:(NSUInteger)index;
 
 @end
 
 @interface CPeripheral : NSObject <PeripheralDelegate, myPeripheralDelegate>
 
-- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy;
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc;
 
 - (void)startAdvertising:(NSString *)roomName;
 
 - (void)stopAdvertising;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
-
-- (void)setAttachedViewController:(UIViewController *)fvc;
 
 - (void)dispatchMessage:(NSData *)mesage from:(NSUInteger)src;
 

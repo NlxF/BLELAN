@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreBluetooth/CoreBluetooth.h>
-#import "comm.h"
 #import "../third/FBShimmering/FBShimmeringView.h"
 
 

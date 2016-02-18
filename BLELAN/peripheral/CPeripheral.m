@@ -14,7 +14,7 @@
 #import "CentralManager.h"
 #import "CentralListViewController.h"
 
-#define UseToReSendIfQueueisFull(notify, character, data) {_notifyCentrals=notify;_preCharacteristic=character;_reSendData=data;}
+static NSLock *isOpen;
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 {
@@ -28,18 +28,12 @@
 @property (nonatomic, strong) CBMutableCharacteristic *nameCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *tickCharacteristic;
-@property (nonatomic, strong) CBMutableCharacteristic *preCharacteristic;
-@property (nonatomic, strong) NSArray* notifyCentrals;
 
 @property (nonatomic, strong) CentralManager *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate> delegate;
 @property (nonatomic, strong) NSString *peripheralName;
-@property (nonatomic, assign) BOOL  isStrategy;
 @property (nonatomic, strong) CentralListViewController *centralTableViewCtrl;
 @property (nonatomic,   weak) UIViewController *attachedViewController;
-@property (nonatomic, strong) NSData *reSendData;
-@property (nonatomic, assign) BOOL isPrepare;
-@property (nonatomic, assign) BOOL isSended;
 
 @property (nonatomic, strong) NSMutableArray *queue;
 
@@ -49,7 +43,7 @@
 @implementation CPeripheral
 
 #pragma mark - custom methods
-- (instancetype)initWithName:(NSString*)name mode:(BOOL)isStrategy
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc
 {
     self = [super init];
     if (self) {
@@ -62,35 +56,45 @@
         _centralsMgr   = [[CentralManager alloc] init];
         //外设名
         _peripheralName = name;
-        //游戏类型
-        _isStrategy = isStrategy;
         //在设备列表中的位置
         selfIndex = 1;
         //是否准备好广播
-        _isPrepare = NO;
+        isOpen = [[NSLock alloc] init];
+        [isOpen lock];
         //初始化出牌顺序
         currentPlayer = 0;
+        
+        _attachedViewController = rootvc;
     }
     return self;
 }
 
+- (void)dealloc
+{
+    isOpen = nil;
+    NSLog(@"析构 peripheral对象");
+}
+
 - (void)startAdvertising:(NSString *)roomName
 {
-    while (!_isPrepare) {
-        [NSThread sleepForTimeInterval:0.5];
+    //1.0s 超时
+    if([isOpen lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:1.0]]){
+        NSLog(@"开始广播");
+        [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: roomName,
+                                                CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
+                                                ]}];
+        [isOpen unlock];
+        
+        //show table view
+        DISPATCH_MAIN(^{
+            _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
+            _centralTableViewCtrl.delegate = self;
+            [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];
+            NSLog(@"显示连接设备列表");
+        });
+    }else{
+        NSLog(@"广播失败");
     }
-    
-    [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: roomName,
-                                            CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
-                                            ]}];
-    
-    //show table view
-    DISPATCH_MAIN(^{
-        _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
-        _centralTableViewCtrl.delegate = self;
-        [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];
-        NSLog(@"显示连接设备列表");
-    });
 }
 
 - (void)stopAdvertising
@@ -104,10 +108,6 @@
     _delegate = delegate;
 }
 
-- (void)setAttachedViewController:(UIViewController *)fvc
-{
-    _attachedViewController = fvc;
-}
 
 /**
  *  循环返回设备列表的索引，表示当前出牌玩家
@@ -148,13 +148,9 @@
         NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:_centralsMgr.centralsList];
         [notifyCentral removeObjectAtIndex:src-2];        //角色列表中第0为NULL，第1为外设
         FrameType gameType    = MakeGameFrame;
-        for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType]) {
-            UseToReSendIfQueueisFull((NSArray*)notifyCentral, _gameCharacteristic, value)
-            _isSended = [_peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_notifyCentrals];
-            while (!_isSended) {
-                NSLog(@"在特性:%@ 转发数据给中心:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]), notifyCentral);
-                [NSThread sleepForTimeInterval:0.1];
-            }
+        for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType])
+        {
+            [self updateCharacteristics:self.gameCharacteristic withValue:value to:notifyCentral];
         }
     }
     
@@ -162,9 +158,7 @@
     NSLog(@"转发，更新调度");
     NSUInteger nextPlayer = [self scheduleNextPlayer];
     NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-
-    UseToReSendIfQueueisFull((NSArray*)_centralsMgr.centralsList, _scheduleCharacteristic, data)
-    [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_notifyCentrals];
+    [self updateCharacteristics:_scheduleCharacteristic withValue:data to:_centralsMgr.centralsList];
     
     //更新调度
     DISPATCH_GLOBAL(^{
@@ -174,25 +168,19 @@
 
 - (BOOL)sendData:(NSData *)mesage
 {
-    if (currentPlayer == selfIndex || !_isStrategy) {
+    if (currentPlayer == selfIndex) {
         //轮到自己出牌
         FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]){
-            UseToReSendIfQueueisFull(_centralsMgr.centralsList, _gameCharacteristic, value)
             NSLog(@"更新数据传输特性,%@", value);
-            _isSended = [self.peripheralMgr updateValue:value forCharacteristic:self.gameCharacteristic onSubscribedCentrals:_notifyCentrals];
-            while (!_isSended) {
-                NSLog(@"发送特性:%@ 时传输队列已满", UUIDNAME([self.gameCharacteristic.UUID UUIDString]));
-                [NSThread sleepForTimeInterval:0.1];
-            }
+            [self updateCharacteristics:_gameCharacteristic withValue:value to:_centralsMgr.centralsList];
         }
         //更新当前出牌对象
         NSLog(@"更新调度");
         NSUInteger nextPlayer = [self scheduleNextPlayer];
         NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-    
-        UseToReSendIfQueueisFull(_centralsMgr.centralsList, _scheduleCharacteristic, data)
-        [_peripheralMgr updateValue:data forCharacteristic:_scheduleCharacteristic onSubscribedCentrals:_notifyCentrals];
+        [self updateCharacteristics:_scheduleCharacteristic withValue:data to:_centralsMgr.centralsList];
+        
         //更新调度
         DISPATCH_GLOBAL(^{
             [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
@@ -209,7 +197,7 @@
     _centralsMgr.centralsName = nil;
 }
 
-#pragma mark - queue
+#pragma mark - 传输队列
 - (void)updateCharacteristics:(CBMutableCharacteristic*)character withValue:(NSData*)value to:(NSArray*)notifyObjs
 {
     @synchronized(self.queue) {
@@ -218,14 +206,15 @@
         }
     }
     @synchronized(self.queue) {
-        [self.queue addObject:@{@"": character, @"": value, @"": notifyObjs}];
+        [self.queue addObject:@{QUEUECHARACTER: character, QUEUEVALUE: value, QUEUETO: notifyObjs}];
     }
     [self processCharacteristicsUpdateQueue];
 }
 
 - (BOOL)updateCharacteristic:(NSDictionary*)queueData
 {
-    return [self.peripheralMgr updateValue:[queueData objectForKey:@""] forCharacteristic:[queueData objectForKey:@""] onSubscribedCentrals:[queueData objectForKey:@""]];
+    NSLog(@"发送数据");
+    return [self.peripheralMgr updateValue:queueData[QUEUEVALUE] forCharacteristic:queueData[QUEUECHARACTER] onSubscribedCentrals:queueData[QUEUETO]];
     
 }
 
@@ -239,9 +228,11 @@
             }
             queueData = [self.queue firstObject];
             if (queueData == nil) {
+                NSLog(@"队列为空，结束发送");
                 break;
             }
         }
+        NSLog(@"系统底层队列已满，等待空余");
     }
 }
 
@@ -274,13 +265,8 @@
             [sendStr appendFormat:@"%@#", name];
         }
         NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
-        UseToReSendIfQueueisFull(@[sendCentral], _nameCharacteristic, deviceData)
-        _isSended = [self.peripheralMgr updateValue:deviceData forCharacteristic:self.nameCharacteristic
-               onSubscribedCentrals:_notifyCentrals];
-        while (!_isSended) {
-            NSLog(@"在特性:%@ 广播角色队列时传输队列已满", UUIDNAME([self.nameCharacteristic.UUID UUIDString]));
-            [NSThread sleepForTimeInterval:0.1];
-        }
+        [self updateCharacteristics:_nameCharacteristic withValue:deviceData to:@[sendCentral]];
+        
     }
     //代理返回设备列表名，包括外设+中心
     DISPATCH_GLOBAL(^{
@@ -299,9 +285,8 @@
     NSLog(@"更新%@中心的断线特性", theOne);
     //更新断线特性
     NSData *updateData = [KICKIDENTIFITY dataUsingEncoding:NSUTF8StringEncoding];
-
-    UseToReSendIfQueueisFull(@[theOne], _tickCharacteristic, updateData)
-    [_peripheralMgr updateValue:updateData forCharacteristic:_tickCharacteristic onSubscribedCentrals:_notifyCentrals];
+    [self updateCharacteristics:_tickCharacteristic withValue:updateData to:@[theOne]];
+    
     //将中心从管理器中删除
     [self.centralsMgr removeCentral:theOne];
 }
@@ -342,8 +327,9 @@
     //特性添加到服务
     broadcastService.characteristics   = @[_gameCharacteristic, _nameCharacteristic, _scheduleCharacteristic, _tickCharacteristic];
 
-    //发布服务和特性
+    //准备发布服务和特性
     [_peripheralMgr addService:broadcastService];
+    
 }
 
 //发布服务后的回调
@@ -354,8 +340,8 @@
         ALERT(_attachedViewController, @"服务发布失败", [error localizedDescription]);
         return;
     }
-    _isPrepare = YES;
     NSLog(@"发布服务");
+    [isOpen unlock];
 }
 
 //开始广播的回调
@@ -456,8 +442,8 @@
  */
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
-    NSLog(@"传输队列有可用空间,重新在特性:%@ 发送数据:%@",UUIDNAME([_preCharacteristic.UUID UUIDString]), _reSendData);
-    _isSended = [self.peripheralMgr updateValue:_reSendData forCharacteristic:_preCharacteristic onSubscribedCentrals:_notifyCentrals];
+    NSLog(@"底层传输队列有可用空间,重新发送");
+    [self processCharacteristicsUpdateQueue];
 }
 
 

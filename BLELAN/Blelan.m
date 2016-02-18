@@ -17,16 +17,14 @@
 @interface LightLAN()
 {
     BOOL _isStarted;
-    BOOL _isStrategy;
     float _waitTime;
     NSString *_name;
-    LightAirType _type;
 }
 
-@property (nonatomic, strong) CCentral<CentralDelegate>            *central;
+@property (nonatomic, strong) CCentral<CentralDelegate>                *central;
 @property (nonatomic, strong) CPeripheral<PeripheralDelegate>      *peripheral;
 @property (nonatomic, strong) id<BlelanDelegate>                   delegate;
-@property (nonatomic,   weak) UIViewController                     *attachedVc;
+@property (nonatomic,   weak) UIViewController                     *rootVc;
 @end
 
 
@@ -34,27 +32,21 @@
 #pragma mark - common
 
 /**
- *  初始化设备时指定类型，作为外设还是中心
+ *  初始化类
  *
- *  @param type 指定实例类型
+ *  @param name 指定初始化名称
  *
- *  @param name 指定设备名称
- *
- *  @param vc 附加视图
- *
- *  @param isStrategy 通信类型，竞技或策略。策略类的话需要维护调度中心，竞技类则不用。
+ *  @param vc root视图
  *
  *  @return LightAir实例
  */
-- (instancetype)initWithType:(LightAirType)type name:(NSString*)name attached:(UIViewController *)vc mode:(BOOL)isStrategy
+- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)root
 {
     self = [super init];
     if (self) {
         _isStarted = NO;
-        _attachedVc = vc;
-        _type = type;
+        _rootVc = root;
         _name = name;
-        _isStrategy = isStrategy;
         _waitTime = 5.0;
         
         //注册关闭ROOM通知
@@ -64,6 +56,14 @@
     }
     return self;
 }
+
+- (void)dealloc
+{
+    NSLog(@"析构 Blelan对象");
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:CLOSEROOMNOTF object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:STARTROOMNOTF  object:nil];
+}
+
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate
 {
@@ -81,14 +81,12 @@
 {
     BOOL isSuccessed;
     if (data == nil) {
-        if (isCentral)
-            self.central = nil;
-        else
-            self.peripheral = nil;
+        self.central = nil;
+        self.peripheral = nil;
         isSuccessed = NO;
     }else{
-        [NSThread sleepForTimeInterval:_waitTime];
-        if(isCentral)
+        //[NSThread sleepForTimeInterval:_waitTime];
+        if(_central != nil)
             //中心经由外设转发
             isSuccessed = [self.central sendData:data];
         else
@@ -101,15 +99,13 @@
 - (void)closeRoom:(NSNotification *)notf
 {
     NSLog(@"关闭房间");
-    if (isCentral)
-        self.central = nil;
-    else
-        self.peripheral = nil;
+    self.central = nil;
+    self.peripheral = nil;
 }
 
 - (void)setWaitTime:(float)utime
 {
-    if (utime > 0) {
+    if (utime > 0.1) {
         _waitTime = utime;
     }
 }
@@ -119,13 +115,10 @@
  */
 - (void)createRoom:(NSString *)roomName
 {
-    if (self.central)
-        self.central = nil;
+    self.central = nil;
 
-    isCentral = NO;
-    selfIndex = 1;
-    self.peripheral = [[CPeripheral alloc] initWithName:_name mode:_isStrategy];
-    [self.peripheral setAttachedViewController:_attachedVc];
+    self.peripheral = [[CPeripheral alloc] initWithName:_name attached:_rootVc];
+    
     [self.peripheral setDelegate:_delegate];
     
     [self.peripheral startAdvertising:roomName];
@@ -136,7 +129,7 @@
     if(self.peripheral){
         [self.peripheral startRoom];
     }else{
-        ALERT(_attachedVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+        ALERT(_rootVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
@@ -147,12 +140,12 @@
 - (void)scanRoom
 {
     //先释放掉别的
-    if (self.peripheral)
-        self.peripheral = nil;
-    isCentral = YES;
-    self.central = [[CCentral alloc] initWithName:_name mode:_isStrategy];
-    [self.central setAttachedViewController:_attachedVc];
+    self.peripheral = nil;
+
+    self.central = [[CCentral alloc] initWithName:_name attached:_rootVc];
+
     [self.central setDelegate:_delegate];
+    
     [self.central scan];
 }
 @end

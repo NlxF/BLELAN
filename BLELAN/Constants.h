@@ -102,9 +102,13 @@ typedef void(^connectBlk)();
 //#define READYCONTENT             @"readyContent"
 
 /*帧数据准备好之后发起通知时传递给接收者的userinfo的key*/
-#define CONTENTKEY                @"contentKey"       //数据key
+#define CONTENTKEY                  @"contentKey"       //数据key
 /*userinfo的key*/
 #define CONTENTTYPE                @"contentType"     //数据类型
 
+/***********************************************************************************************/
+#define QUEUECHARACTER      @"characteritics"
+#define QUEUEVALUE                 @"value"
+#define QUEUETO                        @"centrals"
 
 #endif /* Constants_h */

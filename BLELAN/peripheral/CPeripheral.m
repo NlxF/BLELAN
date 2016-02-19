@@ -47,20 +47,19 @@ static NSLock *isOpen;
 {
     self = [super init];
     if (self) {
+        //是否准备好广播
+        isOpen = [[NSLock alloc] init];
+        [isOpen lock];
         // Start up the CBPeripheralManager
         self.peripheralMgr = [[CBPeripheralManager alloc] initWithDelegate:self
                                                                  queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
                                                                options:@{CBPeripheralManagerOptionShowPowerAlertKey: [NSNumber numberWithBool:YES]}];
-
         //初始化中心管理器
         _centralsMgr   = [[CentralManager alloc] init];
         //外设名
         _peripheralName = name;
         //在设备列表中的位置
         selfIndex = 1;
-        //是否准备好广播
-        isOpen = [[NSLock alloc] init];
-        [isOpen lock];
         //初始化出牌顺序
         currentPlayer = 0;
         
@@ -77,14 +76,12 @@ static NSLock *isOpen;
 
 - (void)startAdvertising:(NSString *)roomName
 {
-    //1.0s 超时
-    if([isOpen lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:1.0]]){
-        NSLog(@"开始广播");
+    //2.0s 超时
+    if([isOpen lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:2.0]]){
+        NSLog(@"准备广播，名称：%@", roomName);
         [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: roomName,
                                                 CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                                 ]}];
-        [isOpen unlock];
-        
         //show table view
         DISPATCH_MAIN(^{
             _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
@@ -340,7 +337,8 @@ static NSLock *isOpen;
         ALERT(_attachedViewController, @"服务发布失败", [error localizedDescription]);
         return;
     }
-    NSLog(@"发布服务");
+    NSLog(@"发布服务成功");
+    
     [isOpen unlock];
 }
 
@@ -352,7 +350,7 @@ static NSLock *isOpen;
         ALERT(_attachedViewController, @"广播失败", [error localizedDescription]);
         return;
     }
-    NSLog(@"开始广播, 外设名: %@", _peripheralName);
+    NSLog(@"开始广播");
 }
 
 //接收到中心端读取特性的请求, (发送数据)

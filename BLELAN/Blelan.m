@@ -99,6 +99,12 @@
 - (void)closeRoom:(NSNotification *)notf
 {
     NSLog(@"关闭房间");
+    if (self.central) {
+        [self.central leaveRoom];
+        DISPATCH_GLOBAL(^{
+            
+        });
+    }
     self.central = nil;
     self.peripheral = nil;
 }

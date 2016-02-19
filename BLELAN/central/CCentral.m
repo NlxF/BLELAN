@@ -11,8 +11,10 @@
 #import "BLELAN.h"
 #import "helper.h"
 #import "Constants.h"
-#import "../model/Payload.h"
+#import "../payload/Payload.h"
 #import "PeripheralListViewController.h"
+
+static NSLock *isPrepare;
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 {
@@ -29,8 +31,6 @@
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 @property (strong, nonatomic) NSString                     *centralName;
 @property (nonatomic,   weak) UIViewController             *attachedViewController;
-//@property (nonatomic, assign) BOOL                         isStrategy;
-@property (nonatomic, assign) BOOL                         isPrepare;
 
 @end
 
@@ -41,6 +41,10 @@
 {
     self = [super init];
     if (self) {
+        //是否准备好扫描
+        isPrepare = [[NSLock alloc] init];
+        [isPrepare lock];
+        
         //start up the CBCentralManager
         _centralMgr = [[CBCentralManager alloc] initWithDelegate:self
                                                            queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
@@ -52,9 +56,6 @@
         //中心名，用于在外设显示
         _centralName = name;
         
-        //是否准备好扫描
-        _isPrepare = NO;
-        
         _attachedViewController = rootvc;
     }
     return self;
@@ -62,6 +63,7 @@
 
 - (void)dealloc
 {
+    isPrepare = nil;
     NSLog(@"析构 central对象");
 }
 
@@ -76,17 +78,16 @@
  */
 - (void)scan
 {
-    while(!_isPrepare){
-        [NSThread sleepForTimeInterval:0.5];
-    }
-    
-    [_centralMgr scanForPeripheralsWithServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]
-                                        options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
-    
-    NSLog(@"开始扫描");
-    _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
-    _peripheralListView.delegate = self;
-    [_peripheralListView showTableView:_attachedViewController animated:YES];
+    if ([isPrepare lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:2.0]]) {
+        NSLog(@"开始扫描");
+        [_centralMgr scanForPeripheralsWithServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]
+                                            options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
+        [isPrepare unlock];
+        _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
+        _peripheralListView.delegate = self;
+        [_peripheralListView showTableView:_attachedViewController animated:YES];
+    }else
+        NSLog(@"准备扫描超时");
 }
 
 /*
@@ -160,7 +161,7 @@
         NSData *data = [DISCONNECTID dataUsingEncoding:NSUTF8StringEncoding];
         [_currentPeripheral writeValue:data forCharacteristic:_kickCharacteristic type:CBCharacteristicWriteWithResponse];
         
-        [NSThread sleepForTimeInterval:0.9];
+        //[NSThread sleepForTimeInterval:0.5];
         [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     }
 }
@@ -180,7 +181,7 @@
  */
 - (void) centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI
 {
-    NSLog(@"发现设备");
+    NSLog(@"发现设备 %@", [advertisementData objectForKey:CBAdvertisementDataLocalNameKey]);
 
     if (RSSI.integerValue > -15 || RSSI.integerValue < -95) {
         return;
@@ -253,8 +254,8 @@
         // In a real app, you'd deal with all the states correctly
         return;
     }
-    NSLog(@"蓝牙准备好扫描");
-    _isPrepare = YES;
+    NSLog(@"蓝牙已准备好,开始扫描");
+    [isPrepare unlock];
 }
 
 #pragma mark - peripheral delegate

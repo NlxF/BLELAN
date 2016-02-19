@@ -30,6 +30,8 @@
 
 - (void)stopScanning;
 
+- (void)leaveRoom;
+
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
 - (void)setAttachedViewController:(UIViewController *)fvc;

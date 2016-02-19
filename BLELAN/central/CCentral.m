@@ -161,7 +161,7 @@ static NSLock *isPrepare;
         NSData *data = [DISCONNECTID dataUsingEncoding:NSUTF8StringEncoding];
         [_currentPeripheral writeValue:data forCharacteristic:_kickCharacteristic type:CBCharacteristicWriteWithResponse];
         
-        [NSThread sleepForTimeInterval:0.9];
+        //[NSThread sleepForTimeInterval:0.5];
         [_centralMgr cancelPeripheralConnection:_currentPeripheral];
     }
 }

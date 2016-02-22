@@ -236,11 +236,6 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
         //reuse cell
         cell = [(UITableViewCell *)[PeripheralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:peripheralCellIdentity];
     }
-    NSValue *dataValue = [self.peripheralsList objectAtIndex:indexPath.row];
-    showData data;
-    [dataValue getValue:&data];
-    cell.textLabel.text = [NSString stringWithUTF8String:data.name];
-    cell.imageView.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
     
     return cell;
 }
@@ -305,4 +300,12 @@ static NSString *peripheralCellIdentity = @"PeripheralListView";
     _fbshimmer.shimmering = NO;
 }
 
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSValue *dataValue = [self.peripheralsList objectAtIndex:indexPath.row];
+    showData data;
+    [dataValue getValue:&data];
+    cell.textLabel.text = [NSString stringWithUTF8String:data.name];
+    cell.imageView.image = [UIImage imageNamed:[Helper imageNameBySignal:data.percentage]];
+}
 @end

@@ -193,7 +193,6 @@ static NSString *centralCellIdentity = @"CentralListView";
         //reuse cell
         cell = [(UITableViewCell *)[CentralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:centralCellIdentity];
     }
-    cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
     
     return cell;
 }
@@ -219,11 +218,6 @@ static NSString *centralCellIdentity = @"CentralListView";
 
 
 #pragma mark - table view delegate
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    
-}
-
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     return 30.;
@@ -253,4 +247,9 @@ static NSString *centralCellIdentity = @"CentralListView";
     return NO;
 }
 
+//即将显示CELL
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    cell.textLabel.text = [self.centralList objectAtIndex:indexPath.row];
+}
 @end

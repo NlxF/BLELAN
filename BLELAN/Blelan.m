@@ -44,8 +44,8 @@
 {
     self = [super init];
     if (self) {
-        _isStarted = NO;
         _name = name;
+        _isStarted = NO;
         _waitTime = 5.0;
         _rootController = root;
         

@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "../central/CCentral.h"
+#import "CCentral.h"
 
 @interface PeripheralListViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>
 

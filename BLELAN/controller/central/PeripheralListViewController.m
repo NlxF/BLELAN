@@ -10,10 +10,10 @@
 #import "PeripheralListViewCell.h"
 #import "PeripheralListViewController.h"
 #import "helper.h"
-#import "../Constants.h"
-#import "../third/FBShimmering/FBShimmering.h"
-#import "../third/FBShimmering/FBShimmeringView.h"
-#import "../third/FXBlurView/FXBlurView.h"
+#import "Constants.h"
+#import "FBShimmering.h"
+#import "FBShimmeringView.h"
+#import "FXBlurView.h"
 
 static NSString *peripheralCellIdentity = @"PeripheralListView";
 

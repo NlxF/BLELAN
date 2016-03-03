@@ -10,8 +10,8 @@
 #import "helper.h"
 #import "Blelan.h"
 #import "Constants.h"
-#import "central/CCentral.h"
-#import "peripheral/CPeripheral.h"
+#import "CCentral.h"
+#import "CPeripheral.h"
 
 
 @interface LightLAN()
@@ -21,10 +21,10 @@
     NSString *_name;
 }
 
-@property (nonatomic, strong) CCentral<CentralDelegate>                *central;
+@property (nonatomic, strong) CCentral<CentralDelegate>            *central;
 @property (nonatomic, strong) CPeripheral<PeripheralDelegate>      *peripheral;
 @property (nonatomic, strong) id<BlelanDelegate>                   delegate;
-@property (nonatomic,   weak) UIViewController                     *rootVc;
+@property (nonatomic,   weak) UIViewController                     *rootController;
 @end
 
 
@@ -45,9 +45,9 @@
     self = [super init];
     if (self) {
         _isStarted = NO;
-        _rootVc = root;
         _name = name;
         _waitTime = 5.0;
+        _rootController = root;
         
         //注册关闭ROOM通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeRoom:) name:CLOSEROOMNOTF object:nil];
@@ -123,7 +123,7 @@
 {
     self.central = nil;
 
-    self.peripheral = [[CPeripheral alloc] initWithName:_name attached:_rootVc];
+    self.peripheral = [[CPeripheral alloc] initWithName:_name attached:_rootController];
     
     [self.peripheral setDelegate:_delegate];
     
@@ -135,7 +135,7 @@
     if(self.peripheral){
         [self.peripheral startRoom];
     }else{
-        ALERT(_rootVc, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+        ALERT(_rootController, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
@@ -148,7 +148,7 @@
     //先释放掉别的
     self.peripheral = nil;
 
-    self.central = [[CCentral alloc] initWithName:_name attached:_rootVc];
+    self.central = [[CCentral alloc] initWithName:_name attached:_rootController];
 
     [self.central setDelegate:_delegate];
     

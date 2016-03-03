@@ -11,7 +11,7 @@
 #import "BLELAN.h"
 #import "helper.h"
 #import "Constants.h"
-#import "../payload/Payload.h"
+#import "Payload.h"
 #import "PeripheralListViewController.h"
 
 static NSLock *isPrepare;

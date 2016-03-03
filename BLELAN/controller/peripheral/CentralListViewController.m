@@ -10,7 +10,7 @@
 #import "CentralListViewCell.h"
 #import "CentralListViewController.h"
 #import "helper.h"
-#import "../Constants.h"
+#import "Constants.h"
 
 
 static NSString *centralCellIdentity = @"CentralListView";
@@ -189,10 +189,6 @@ static NSString *centralCellIdentity = @"CentralListView";
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:centralCellIdentity forIndexPath:indexPath];
-    if (cell == nil) {
-        //reuse cell
-        cell = [(UITableViewCell *)[CentralListViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:centralCellIdentity];
-    }
     
     return cell;
 }

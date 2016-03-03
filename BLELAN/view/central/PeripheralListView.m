@@ -7,7 +7,7 @@
 //
 
 #import "PeripheralListView.h"
-#import "../Constants.h"
+#import "Constants.h"
 
 @interface PeripheralListView()
 

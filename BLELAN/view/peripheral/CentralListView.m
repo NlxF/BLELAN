@@ -7,7 +7,7 @@
 //
 
 #import "CentralListView.h"
-#import "../Constants.h"
+#import "Constants.h"
 
 @interface CentralListView()
 

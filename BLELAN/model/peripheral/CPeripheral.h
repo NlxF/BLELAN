@@ -14,7 +14,7 @@
 
 - (void)exchangePosition:(NSUInteger)from to:(NSUInteger)to;
 
-- (void)startRoom;
+- (void)startRoomWith:(CGFloat)waitingTine;
 
 - (void)kickOne:(NSUInteger)index;
 

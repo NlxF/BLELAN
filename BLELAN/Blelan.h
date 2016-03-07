@@ -19,12 +19,18 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
  *  结果回调，用来接收游戏数据或者聊天内容，串行到达。
  */
 @protocol BlelanDelegate <NSObject>
+
 @required
 
+/**
+ *  接受到的数据
+ *
+ *  @param data 接受的数据
+ */
 - (void)recvData:(NSData *)data;
 
 /**
- *  player列表，外设+中心，当收到此消息时表示连接已准备好，可以开始通信
+ *  player列表，外设+中心，当收到此通知时表示连接已准备好，可以开始通信。
  *
  *  @param list  设备名列表，索引从1开始
  *  @param error 是否出错
@@ -32,7 +38,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 - (void)playersList:(NSArray<NSString*> *)playerList error:(NSError*)error;
 
 /**
- *  当为策略类型时，返回当前操作者索引，基于playerList
+ *  当为策略类型时，返回当前操作者索引，索引基于playerList
  *
  *  @param currentIndex 当前动作角色索引
  *  @param selfIndex    角色索引
@@ -43,8 +49,6 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 
 @interface LightLAN : NSObject
-{
-}
 
 /*******************************common*********************************/
 
@@ -54,14 +58,16 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
 
-- (void)setWaitTime:(float)utime;
+- (void)setDecisionTime:(CGFloat)utime;
 
 /***************************peripheral*********************************/
 
 - (void)createRoom:(NSString *)roomName;
 
-/*******************************central*********************************/
+/*******************************central********************************/
 
 - (void)scanRoom;
+
+/*********************************end**********************************/
 
 @end

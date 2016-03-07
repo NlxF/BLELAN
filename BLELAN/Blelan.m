@@ -17,8 +17,8 @@
 @interface LightLAN()
 {
     BOOL _isStarted;
-    float _waitTime;
     NSString *_name;
+    CGFloat _decisionTime;
 }
 
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
@@ -46,7 +46,7 @@
     if (self) {
         _name = name;
         _isStarted = NO;
-        _waitTime = 5.0;
+        _decisionTime = 5.0;
         _rootController = root;
         
         //注册关闭ROOM通知
@@ -79,18 +79,19 @@
 */
 - (BOOL)sendData:(NSData *)data
 {
-    BOOL isSuccessed;
+    BOOL isSuccessed = NO;
     if (data == nil) {
+        
         self.central = nil;
         self.peripheral = nil;
         isSuccessed = NO;
     }else{
-        //[NSThread sleepForTimeInterval:_waitTime];
+        
         if(_central != nil)
-            //中心经由外设转发
+            //中心发送数据
             isSuccessed = [self.central sendData:data];
         else
-            //外设本身直接发送
+            //外设发送数据
             isSuccessed = [self.peripheral sendData:data];
     }
     return isSuccessed;
@@ -109,10 +110,10 @@
     self.peripheral = nil;
 }
 
-- (void)setWaitTime:(float)utime
+- (void)setDecisionTime:(CGFloat)utime
 {
-    if (utime > 0.1) {
-        _waitTime = utime;
+    if (utime > 0) {
+        _decisionTime = utime;
     }
 }
 
@@ -133,7 +134,9 @@
 - (void)startRoom:(NSNotification *)notf
 {
     if(self.peripheral){
-        [self.peripheral startRoom];
+        
+        [self.peripheral startRoomWith:_decisionTime];
+        
     }else{
         ALERT(_rootController, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }

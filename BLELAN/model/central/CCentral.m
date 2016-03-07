@@ -18,6 +18,7 @@ static NSLock *isPrepare;
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 {
+    NSString    *centralName;
     NSUInteger currentPlayer;
     NSUInteger selfIndex;
 }
@@ -27,11 +28,10 @@ static NSLock *isPrepare;
 @property (strong, nonatomic) CBPeripheral                 *currentPeripheral;
 @property (strong, nonatomic) CBCharacteristic             *gameCharacteristic;
 @property (strong, nonatomic) CBCharacteristic             *kickCharacteristic;
-@property (strong,    atomic) NSMutableArray               *allPeripherals;
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
-@property (strong, nonatomic) NSString                     *centralName;
-@property (nonatomic,   weak) UIViewController             *attachedViewController;
+@property (weak,   nonatomic) UIViewController             *attachedViewController;
 
+@property (strong,    atomic) NSMutableArray               *allPeripherals;
 @end
 
 @implementation CCentral
@@ -54,7 +54,7 @@ static NSLock *isPrepare;
         _allPeripherals = [[NSMutableArray alloc] init];
         
         //中心名，用于在外设显示
-        _centralName = name;
+        centralName = name;
         
         _attachedViewController = rootvc;
     }
@@ -83,7 +83,8 @@ static NSLock *isPrepare;
         [_centralMgr scanForPeripheralsWithServices:@[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]]
                                             options:@{CBCentralManagerScanOptionAllowDuplicatesKey:[NSNumber numberWithBool:NO]}];
         [isPrepare unlock];
-        _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中"];
+        
+        _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中..."];
         _peripheralListView.delegate = self;
         [_peripheralListView showTableView:_attachedViewController animated:YES];
     }else
@@ -121,6 +122,7 @@ static NSLock *isPrepare;
 {
     //断开连接
     [self.centralMgr cancelPeripheralConnection:self.currentPeripheral];
+    
     //更新界面
     DISPATCH_MAIN(^{
         [self.peripheralListView stopShimmer];
@@ -254,7 +256,7 @@ static NSLock *isPrepare;
         // In a real app, you'd deal with all the states correctly
         return;
     }
-    NSLog(@"蓝牙已准备好,开始扫描");
+    NSLog(@"蓝牙已准备好,可以开始扫描");
     [isPrepare unlock];
 }
 
@@ -291,9 +293,9 @@ static NSLock *isPrepare;
         NSLog(@"发现特性，%@,", UUIDNAME([character.UUID UUIDString]));
         if ([character.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]) {
             //设备名称特性
-            NSLog(@"发送中心名，%@", _centralName);
-            NSData *centralName = [_centralName dataUsingEncoding:NSUTF8StringEncoding];
-            [peripheral writeValue:centralName forCharacteristic:character type:CBCharacteristicWriteWithResponse];
+            NSLog(@"发送中心名，%@", centralName);
+            NSData *centralDataName = [centralName dataUsingEncoding:NSUTF8StringEncoding];
+            [peripheral writeValue:centralDataName forCharacteristic:character type:CBCharacteristicWriteWithResponse];
             //订阅，等待开始后设备列表更新
             NSLog(@"订阅设备名称特性，等待房主开始");
             [peripheral setNotifyValue:YES forCharacteristic:character];

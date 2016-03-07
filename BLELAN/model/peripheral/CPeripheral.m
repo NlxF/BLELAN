@@ -18,9 +18,11 @@ static NSLock *isOpen;
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 {
+    CGFloat    decisionTime;
     NSUInteger selfIndex;
     NSUInteger playerNums;
     NSUInteger currentPlayer;
+    NSString  *peripheralName;
 }
 
 @property (nonatomic, strong) CBPeripheralManager     *peripheralMgr;
@@ -29,13 +31,12 @@ static NSLock *isOpen;
 @property (nonatomic, strong) CBMutableCharacteristic *scheduleCharacteristic;
 @property (nonatomic, strong) CBMutableCharacteristic *tickCharacteristic;
 
-@property (nonatomic, strong) CentralManager *centralsMgr;
-@property (nonatomic, strong) id<BlelanDelegate> delegate;
-@property (nonatomic, strong) NSString *peripheralName;
-@property (nonatomic, strong) CentralListViewController *centralTableViewCtrl;
-@property (nonatomic,   weak) UIViewController *attachedViewController;
+@property (nonatomic, strong) CentralManager             *centralsMgr;
+@property (nonatomic, strong) id<BlelanDelegate>         delegate;
+@property (nonatomic, strong) CentralListViewController  *centralTableViewCtrl;
+@property (nonatomic,   weak) UIViewController           *attachedViewController;
 
-@property (nonatomic, strong) NSMutableArray *queue;
+@property (nonatomic, strong) NSMutableArray             *queue;
 
 @end
 
@@ -50,14 +51,13 @@ static NSLock *isOpen;
         //是否准备好广播
         isOpen = [[NSLock alloc] init];
         [isOpen lock];
+        
         // Start up the CBPeripheralManager
         self.peripheralMgr = [[CBPeripheralManager alloc] initWithDelegate:self
-                                                                 queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-                                                               options:@{CBPeripheralManagerOptionShowPowerAlertKey: [NSNumber numberWithBool:YES]}];
-        //初始化中心管理器
-        _centralsMgr   = [[CentralManager alloc] init];
+                                                                     queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
+                                                                   options:@{CBPeripheralManagerOptionShowPowerAlertKey: [NSNumber numberWithBool:YES]}];
         //外设名
-        _peripheralName = name;
+        peripheralName = name;
         //在设备列表中的位置
         selfIndex = 1;
         //初始化出牌顺序
@@ -76,21 +76,28 @@ static NSLock *isOpen;
 
 - (void)startAdvertising:(NSString *)roomName
 {
-    //2.0s 超时
+    //2.s 超时
     if([isOpen lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:2.0]]){
-        NSLog(@"准备广播，名称：%@", roomName);
-        [_peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey: roomName,
+        NSLog(@"准备好广播，名称：%@", roomName);
+        [self.peripheralMgr startAdvertising:@{ CBAdvertisementDataLocalNameKey    : roomName,
                                                 CBAdvertisementDataServiceUUIDsKey : @[[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                                 ]}];
-        //show table view
-        DISPATCH_MAIN(^{
-            _centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
-            _centralTableViewCtrl.delegate = self;
-            [_centralTableViewCtrl showTableView:_attachedViewController animated:YES];
-            NSLog(@"显示连接设备列表");
-        });
+        
+        if ([isOpen lockBeforeDate:[NSDate dateWithTimeIntervalSinceNow:1]]) {
+            [isOpen unlock];
+            
+            //show table view
+            DISPATCH_MAIN(^{
+                self.centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
+                self.centralTableViewCtrl.delegate = self;
+                [self.centralTableViewCtrl showTableView:self.attachedViewController animated:YES];
+                NSLog(@"显示连接设备列表");
+            });
+        }else{
+            NSLog(@"显示广播界面失败");
+        }
     }else{
-        NSLog(@"广播失败");
+        NSLog(@"尝试广播失败");
     }
 }
 
@@ -107,15 +114,20 @@ static NSLock *isOpen;
 
 
 /**
- *  循环返回设备列表的索引，表示当前出牌玩家
+ *  循环更新当前操作对象的索引
  *
- *  @return 当前出牌玩家在设备列表中的索引
  */
-- (NSUInteger)scheduleNextPlayer
+- (void)scheduleNextPlayer
 {
     currentPlayer = currentPlayer >= playerNums ? 1 : currentPlayer+1;
     
-    return currentPlayer;
+    NSData *data  = [NSData dataWithBytes:&currentPlayer length:sizeof(currentPlayer)];
+    [self updateCharacteristics:self.scheduleCharacteristic withValue:data to:self.centralsMgr.centralsList];
+    
+    //更新调度外设调度
+    DISPATCH_GLOBAL(^{
+        [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
+    });
 }
 
 /**
@@ -129,8 +141,8 @@ static NSLock *isOpen;
     
     //设备列表，索引从1开始。
     [arr addObject:@"NULL"];
-    [arr addObject:_peripheralName];
-    [arr addObjectsFromArray:_centralsMgr.centralsName];
+    [arr addObject:peripheralName];
+    [arr addObjectsFromArray:self.centralsMgr.centralsName];
     
     //玩家数量
     playerNums = [arr count] - 1;
@@ -140,10 +152,12 @@ static NSLock *isOpen;
 
 - (void)dispatchMessage:(NSData *)mesage from:(NSUInteger)src
 {
-    //将收到的数据转播出去
-    if([_centralsMgr.centralsList count] > 1){
-        NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:_centralsMgr.centralsList];
-        [notifyCentral removeObjectAtIndex:src-2];        //角色列表中第0为NULL，第1为外设
+    //将数据广播出去
+    if([self.centralsMgr.centralsList count] >= 1){
+        NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:self.centralsMgr.centralsList];
+        if (src != 1) {
+            [notifyCentral removeObjectAtIndex:src-2];        //角色列表中第0为NULL，第1为外设
+        }
         FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType])
         {
@@ -151,37 +165,36 @@ static NSLock *isOpen;
         }
     }
     
-    //更新当前出牌对象
+    //更新中心调度
     NSLog(@"转发，更新调度");
-    NSUInteger nextPlayer = [self scheduleNextPlayer];
-    NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-    [self updateCharacteristics:_scheduleCharacteristic withValue:data to:_centralsMgr.centralsList];
+    [self scheduleNextPlayer];
     
-    //更新调度
-    DISPATCH_GLOBAL(^{
-        [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
-    });
 }
 
 - (BOOL)sendData:(NSData *)mesage
 {
     if (currentPlayer == selfIndex) {
+        //分发
+        NSLog(@"更新数据传输特性,%@", mesage);
+        [self dispatchMessage:mesage from:1];
+        
         //轮到自己出牌
-        FrameType gameType    = MakeGameFrame;
+        /*FrameType gameType    = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]){
             NSLog(@"更新数据传输特性,%@", value);
-            [self updateCharacteristics:_gameCharacteristic withValue:value to:_centralsMgr.centralsList];
+            [self updateCharacteristics:_gameCharacteristic withValue:value to:self.centralsMgr.centralsList];
         }
         //更新当前出牌对象
         NSLog(@"更新调度");
         NSUInteger nextPlayer = [self scheduleNextPlayer];
         NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-        [self updateCharacteristics:_scheduleCharacteristic withValue:data to:_centralsMgr.centralsList];
+        [self updateCharacteristics:_scheduleCharacteristic withValue:data to:self.centralsMgr.centralsList];
         
         //更新调度
         DISPATCH_GLOBAL(^{
             [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
-        });
+        });*/
+        
         return YES;
     }
     return NO;
@@ -190,8 +203,70 @@ static NSLock *isOpen;
 - (void)cleanCentralMgr
 {
     NSLog(@"清理中心管理器");
-    _centralsMgr.centralsList = nil;
-    _centralsMgr.centralsName = nil;
+    self.centralsMgr.centralsList = nil;
+    self.centralsMgr.centralsName = nil;
+}
+
+#pragma mark - attribute methods
+- (CentralManager*)centralsMgr
+{
+    if (_centralsMgr == nil) {
+        //初始化中心管理器
+        _centralsMgr   = [[CentralManager alloc] init];
+    }
+    return _centralsMgr;
+}
+
+- (CBMutableCharacteristic *)gameCharacteristic
+{
+    if (_gameCharacteristic == nil) {
+        //游戏特性
+        _gameCharacteristic = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
+                                                                                properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
+                                                                                     value:nil
+                                                                               permissions:CBAttributePermissionsReadable|CBAttributePermissionsWriteable];
+    }
+    
+    return _gameCharacteristic;
+}
+
+- (CBMutableCharacteristic *)nameCharacteristic
+{
+    if (_nameCharacteristic == nil) {
+        //设备名称特性
+        _nameCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]
+                                                                          properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
+                                                                               value:nil
+                                                                         permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
+    }
+    
+    return _nameCharacteristic;
+}
+
+- (CBMutableCharacteristic *)tickCharacteristic
+{
+    if (_tickCharacteristic == nil) {
+        //断线特性
+        _tickCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTTICKUUID]
+                                                                                 properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead|CBCharacteristicPropertyWrite
+                                                                                      value:nil
+                                                                                permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
+    }
+    
+    return _tickCharacteristic;
+}
+
+- (CBMutableCharacteristic *)scheduleCharacteristic
+{
+    if (_scheduleCharacteristic == nil) {
+        //调度特性
+        _scheduleCharacteristic            = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]
+                                                                                properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
+                                                                                     value:nil
+                                                                               permissions:CBAttributePermissionsReadable];
+    }
+    
+    return _scheduleCharacteristic;
 }
 
 #pragma mark - 传输队列
@@ -199,7 +274,7 @@ static NSLock *isOpen;
 {
     @synchronized(self.queue) {
         if (self.queue == nil) {
-            self.queue = [NSMutableArray new];
+            self.queue = [[NSMutableArray alloc] init];
         }
     }
     @synchronized(self.queue) {
@@ -233,14 +308,22 @@ static NSLock *isOpen;
     }
 }
 
+#pragma mark - 开始决策时间等待事件循环
+- (void)startRunLoppForSchedule:(NSData *)waitTime
+{
+    NSLog(@"等待决策超时，调度下位");
+    [self scheduleNextPlayer];
+}
+
+
 #pragma mark - myPeripheralDelegate
 - (void)exchangePosition:(NSUInteger)from to:(NSUInteger)to
 {
-    [_centralsMgr.centralsName exchangeObjectAtIndex:from withObjectAtIndex:to];
-    [_centralsMgr.centralsList exchangeObjectAtIndex:from withObjectAtIndex:to];
+    [self.centralsMgr.centralsName exchangeObjectAtIndex:from withObjectAtIndex:to];
+    [self.centralsMgr.centralsList exchangeObjectAtIndex:from withObjectAtIndex:to];
 }
 
-- (void)startRoom
+- (void)startRoomWith:(CGFloat)waitingTine
 {
     NSLog(@"ROOM开始");
     
@@ -252,7 +335,7 @@ static NSLock *isOpen;
     
     //将角色列表广播出去
     NSLog(@"广播角色列表");
-    for (int idx=0; idx<self.centralsMgr.centralsList.count; ++idx) {
+    for (int idx=0; idx < self.centralsMgr.centralsList.count; ++idx) {
         CBCentral *sendCentral = [self.centralsMgr.centralsList objectAtIndex:idx];
         NSMutableArray *sendData = (NSMutableArray*)[self deviceList];
         [sendData insertObject:[NSNumber numberWithInt:idx+2] atIndex:0];
@@ -262,7 +345,7 @@ static NSLock *isOpen;
             [sendStr appendFormat:@"%@#", name];
         }
         NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
-        [self updateCharacteristics:_nameCharacteristic withValue:deviceData to:@[sendCentral]];
+        [self updateCharacteristics:self.nameCharacteristic withValue:deviceData to:@[sendCentral]];
         
     }
     //代理返回设备列表名，包括外设+中心
@@ -274,6 +357,12 @@ static NSLock *isOpen;
             [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
         });
     });
+    
+    //开始事件循环，周期为 decisionTime
+    decisionTime = waitingTine;
+    NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
+    [NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
+    
 }
 
 - (void)kickOne:(NSUInteger)index
@@ -282,7 +371,7 @@ static NSLock *isOpen;
     NSLog(@"更新%@中心的断线特性", theOne);
     //更新断线特性
     NSData *updateData = [KICKIDENTIFITY dataUsingEncoding:NSUTF8StringEncoding];
-    [self updateCharacteristics:_tickCharacteristic withValue:updateData to:@[theOne]];
+    [self updateCharacteristics:self.tickCharacteristic withValue:updateData to:@[theOne]];
     
     //将中心从管理器中删除
     [self.centralsMgr removeCentral:theOne];
@@ -300,32 +389,15 @@ static NSLock *isOpen;
     CBMutableService *broadcastService = [[CBMutableService alloc] initWithType:[CBUUID UUIDWithString:SERVICEBROADCASTUUID]
                                                                         primary:YES];
 
-    //游戏特性
-    _gameCharacteristic                = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTCHARACTERUUID]
-                                                                     properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
-                                                                          value:nil
-                                                                    permissions:CBAttributePermissionsReadable|CBAttributePermissionsWriteable];
-
-    //设备名称特性
-    _nameCharacteristic          = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]
-                                                                 properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyWrite|CBCharacteristicPropertyRead
-                                                                      value:nil
-                                                                permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
-    //调度特性
-    _scheduleCharacteristic            = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASESCHEDULEUUID]
-                                                                     properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead
-                                                                          value:nil
-                                                                    permissions:CBAttributePermissionsReadable];
-    //断线特性
-    _tickCharacteristic                 = [[CBMutableCharacteristic alloc] initWithType:[CBUUID UUIDWithString:BROADCASTTICKUUID]
-                                                                             properties:CBCharacteristicPropertyNotify|CBCharacteristicPropertyRead|CBCharacteristicPropertyWrite
-                                                                                  value:nil
-                                                                            permissions:CBAttributePermissionsWriteable|CBAttributePermissionsReadable];
     //特性添加到服务
-    broadcastService.characteristics   = @[_gameCharacteristic, _nameCharacteristic, _scheduleCharacteristic, _tickCharacteristic];
+    broadcastService.characteristics   = @[self.gameCharacteristic,
+                                           self.nameCharacteristic,
+                                           self.scheduleCharacteristic,
+                                           self.tickCharacteristic
+                                           ];
 
     //准备发布服务和特性
-    [_peripheralMgr addService:broadcastService];
+    [self.peripheralMgr addService:broadcastService];
     
 }
 
@@ -351,6 +423,8 @@ static NSLock *isOpen;
         return;
     }
     NSLog(@"开始广播");
+    
+    [isOpen unlock];
 }
 
 //接收到中心端读取特性的请求, (发送数据)
@@ -371,7 +445,7 @@ static NSLock *isOpen;
             NSString *centralName = [[NSString alloc] initWithData:request.value encoding:NSUTF8StringEncoding];
             NSLog(@"收到中心数据：%@", centralName);
             //将设备名存储到中心管理器
-            if([_centralsMgr addCentral:request.central name: centralName]){
+            if([self.centralsMgr addCentral:request.central name: centralName]){
                 //添加成功后更新tableview
                 [_centralTableViewCtrl UpdateCentralList:centralName];
             }
@@ -397,7 +471,7 @@ static NSLock *isOpen;
                     //更新UI
                     [self.centralTableViewCtrl deleteAtRow:[self.centralsMgr indexOfObject:request.central]];
                     //将中心从中心管理器移除
-                    [_centralsMgr removeCentral:request.central];
+                    [self.centralsMgr removeCentral:request.central];
                 });
             }
         }

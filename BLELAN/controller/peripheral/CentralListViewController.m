@@ -16,23 +16,46 @@
 static NSString *centralCellIdentity = @"CentralListView";
 
 @interface CentralListViewController ()
+{
+    NSString       *tableTitle;
+}
 
 @property (atomic   , strong) NSMutableArray *centralList;
-@property (nonatomic, strong) UITableView  *myCentralTable;
-@property (nonatomic, strong) UIView       *titleView;
-@property (nonatomic, strong) NSString     *tableTitle;
+@property (nonatomic, strong) UITableView    *myCentralTable;
+@property (nonatomic, strong) UIView         *titleView;
+
 @end
 
 @implementation CentralListViewController
 
 @synthesize centralList = _centralList;
 
+
+- (id)initWithTitle:(NSString *)aTitle
+{
+    if (self = [super init]) {
+        tableTitle = aTitle;
+        
+        _myCentralTable = [[UITableView alloc] initWithFrame:[Helper tableRect]
+                                                       style:UITableViewStylePlain];
+        _myCentralTable.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
+        _myCentralTable.backgroundColor = [UIColor clearColor];
+        [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:centralCellIdentity];
+        _myCentralTable.delegate = self;
+        _myCentralTable.dataSource = self;
+        
+        [self.view addSubview:_myCentralTable];
+    }
+    
+    return self;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
 
     self.view = [[CentralListView alloc] initWithFrame:[Helper deviceRect]
                                                  style:UITableViewStylePlain
-                                                 title:_tableTitle];
+                                                 title:tableTitle];
     self.view.alpha = 0.1;
     self.view.backgroundColor = [UIColor clearColor];
     
@@ -50,7 +73,7 @@ static NSString *centralCellIdentity = @"CentralListView";
     
     //长按排序
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] init];
-    longPress.minimumPressDuration = 0.5;
+    longPress.minimumPressDuration = 0.55;
     [longPress addTarget:self action:@selector(changeModel:)];
     [_myCentralTable addGestureRecognizer:longPress];
 }
@@ -61,25 +84,7 @@ static NSString *centralCellIdentity = @"CentralListView";
 }
 
 
-- (id)initWithTitle:(NSString *)aTitle
-{
-    if (self = [super init]) {
-        _tableTitle = aTitle;
-        _myCentralTable = [[UITableView alloc] initWithFrame:[Helper tableRect]
-                                                       style:UITableViewStylePlain];
-        
-        _myCentralTable.separatorColor = [UIColor colorWithWhite:0 alpha:.2];
-        _myCentralTable.backgroundColor = [UIColor clearColor];
-        [_myCentralTable registerClass:[CentralListViewCell class] forCellReuseIdentifier:centralCellIdentity];
-        _myCentralTable.delegate = self;
-        _myCentralTable.dataSource = self;
-        
-        [self.view addSubview:_myCentralTable];
-    }
-    
-    return self;
-}
-
+#pragma mark - attribute methods
 - (NSMutableArray *)centralList
 {
     if (_centralList == nil) {

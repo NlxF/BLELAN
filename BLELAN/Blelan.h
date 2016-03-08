@@ -32,10 +32,10 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 /**
  *  player列表，外设+中心，当收到此通知时表示连接已准备好，可以开始通信。
  *
- *  @param list  设备名列表，索引从1开始
- *  @param error 是否出错
+ *  @param list         设备名列表，索引从1开始
+ *  @param decisionTime 决策等待时间
  */
-- (void)playersList:(NSArray<NSString*> *)playerList error:(NSError*)error;
+- (void)playersList:(NSArray<NSString*> *)playerList wait:(CGFloat)time;
 
 /**
  *  当为策略类型时，返回当前操作者索引，索引基于playerList

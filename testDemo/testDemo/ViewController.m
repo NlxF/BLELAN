@@ -61,7 +61,7 @@ static NSString *sendData;
     if (_ligjtair == nil) {
         _ligjtair = [[LightLAN alloc] initWithName:@"player-1" attached:self];
         [_ligjtair setDelegate:self];
-        [_ligjtair setWaitTime:0.1];
+        [_ligjtair setDecisionTime:5];
     }
     
     [_ligjtair createRoom:@"ROOM-3"];
@@ -75,7 +75,6 @@ static NSString *sendData;
     if (_ligjtair == nil) {
         _ligjtair = [[LightLAN alloc] initWithName:@"player-3" attached:self];
         [_ligjtair setDelegate:self];
-        [_ligjtair setWaitTime:0.1];
     }
     
     [_ligjtair scanRoom];
@@ -92,7 +91,7 @@ static NSString *sendData;
     [self AddRow:[NSString stringWithFormat:@"接收数据:%@", sendData]];
 }
 
-- (void)playersList:(NSArray<NSString*> *)playerList error:(NSError*)error
+- (void)playersList:(NSArray<NSString*> *)playerList wait:(CGFloat)time
 {
     for (int idx = 1; idx < playerList.count; idx++) {
         [self AddRow:[NSString stringWithFormat:@"角色:%@", playerList[idx]]];
@@ -106,6 +105,7 @@ static NSString *sendData;
     
     //外设首发
     if (currentIndex == selfIndex) {
+        [NSThread sleepForTimeInterval:5];
         sendData = [NSString stringWithFormat:@"%@#", sendData];
         if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]])
             [self AddRow:[[NSString alloc] initWithFormat:@"发送数据:%@", sendData]];

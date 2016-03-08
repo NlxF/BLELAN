@@ -39,6 +39,8 @@
 		7A3D5DD61C88A32B001461DA /* FBShimmeringView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A3D5DD11C88A32B001461DA /* FBShimmeringView.m */; };
 		7A3D5DD91C88A345001461DA /* FXBlurView.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A3D5DD71C88A345001461DA /* FXBlurView.h */; };
 		7A3D5DDA1C88A345001461DA /* FXBlurView.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A3D5DD81C88A345001461DA /* FXBlurView.m */; };
+		7A424C7A1C8DCC3C00AD6D3B /* NSObject+Format.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A424C781C8DCC3C00AD6D3B /* NSObject+Format.h */; };
+		7A424C7B1C8DCC3C00AD6D3B /* NSObject+Format.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A424C791C8DCC3C00AD6D3B /* NSObject+Format.m */; };
 		7A9D0A801C49E1DD006F1F71 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A9D0A7F1C49E1DD006F1F71 /* CoreBluetooth.framework */; };
 		7A9D0A861C49E926006F1F71 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A9D0A851C49E926006F1F71 /* UIKit.framework */; };
 		7A9D0A881C4A3DBB006F1F71 /* Constants.h in Headers */ = {isa = PBXBuildFile; fileRef = 7A9D0A871C4A3DBB006F1F71 /* Constants.h */; };
@@ -81,6 +83,8 @@
 		7A3D5DD11C88A32B001461DA /* FBShimmeringView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FBShimmeringView.m; path = BLELAN/view/third/FBShimmering/FBShimmeringView.m; sourceTree = SOURCE_ROOT; };
 		7A3D5DD71C88A345001461DA /* FXBlurView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FXBlurView.h; path = BLELAN/view/third/FXBlurView/FXBlurView.h; sourceTree = SOURCE_ROOT; };
 		7A3D5DD81C88A345001461DA /* FXBlurView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FXBlurView.m; path = BLELAN/view/third/FXBlurView/FXBlurView.m; sourceTree = SOURCE_ROOT; };
+		7A424C781C8DCC3C00AD6D3B /* NSObject+Format.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSObject+Format.h"; path = "BLELAN/model/NSObject+Format.h"; sourceTree = "<group>"; };
+		7A424C791C8DCC3C00AD6D3B /* NSObject+Format.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSObject+Format.m"; path = "BLELAN/model/NSObject+Format.m"; sourceTree = "<group>"; };
 		7A9D0A7F1C49E1DD006F1F71 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		7A9D0A851C49E926006F1F71 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		7A9D0A871C4A3DBB006F1F71 /* Constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Constants.h; sourceTree = "<group>"; };
@@ -203,6 +207,8 @@
 				7A9D0AA41C4B957E006F1F71 /* Payload */,
 				7A3D5DA41C88A0CA001461DA /* Peripheral */,
 				7A3D5DA31C88A0C3001461DA /* Central */,
+				7A424C781C8DCC3C00AD6D3B /* NSObject+Format.h */,
+				7A424C791C8DCC3C00AD6D3B /* NSObject+Format.m */,
 			);
 			name = Model;
 			path = ..;
@@ -319,6 +325,7 @@
 				7A3D5DA91C88A26A001461DA /* CentralManager.h in Headers */,
 				7A3D5DB31C88A29D001461DA /* Payload.h in Headers */,
 				7A3D5DAF1C88A27F001461DA /* CCentral.h in Headers */,
+				7A424C7A1C8DCC3C00AD6D3B /* NSObject+Format.h in Headers */,
 				7A9D0A9E1C4B6835006F1F71 /* helper.h in Headers */,
 				7A3D5DC91C88A300001461DA /* PeripheralListView.h in Headers */,
 				57A6E37F1C48E7DA00902F01 /* Blelan.h in Headers */,
@@ -405,6 +412,7 @@
 				7A3D5DD41C88A32B001461DA /* FBShimmeringLayer.m in Sources */,
 				7A3D5DC41C88A2ED001461DA /* CentralListViewCell.m in Sources */,
 				7A9D0A9F1C4B6835006F1F71 /* helper.m in Sources */,
+				7A424C7B1C8DCC3C00AD6D3B /* NSObject+Format.m in Sources */,
 				7A3D5DBC1C88A2D5001461DA /* PeripheralListViewController.m in Sources */,
 				7A3D5DCC1C88A300001461DA /* PeripheralListViewCell.m in Sources */,
 				7A3D5DB81C88A2CA001461DA /* CentralListViewController.m in Sources */,

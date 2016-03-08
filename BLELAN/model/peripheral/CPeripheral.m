@@ -13,14 +13,16 @@
 #import "CPeripheral.h"
 #import "CentralManager.h"
 #import "CentralListViewController.h"
+#import "NSObject+Format.h"
+
 
 static NSLock *isOpen;
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 {
-    CGFloat    decisionTime;
     NSUInteger selfIndex;
     NSUInteger playerNums;
+    CGFloat    decisionTime;
     NSUInteger currentPlayer;
     NSString  *peripheralName;
 }
@@ -37,6 +39,8 @@ static NSLock *isOpen;
 @property (nonatomic,   weak) UIViewController           *attachedViewController;
 
 @property (nonatomic, strong) NSMutableArray             *queue;
+
+@property (atomic   , assign) BOOL                       updateScheduleInLoop;
 
 @end
 
@@ -62,6 +66,8 @@ static NSLock *isOpen;
         selfIndex = 1;
         //初始化出牌顺序
         currentPlayer = 0;
+        //周期内是否已更新调度
+        _updateScheduleInLoop = NO;
         
         _attachedViewController = rootvc;
     }
@@ -128,6 +134,9 @@ static NSLock *isOpen;
     DISPATCH_GLOBAL(^{
         [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
     });
+    
+    //更新调度更新标识
+    self.updateScheduleInLoop = YES;
 }
 
 /**
@@ -311,8 +320,13 @@ static NSLock *isOpen;
 #pragma mark - 开始决策时间等待事件循环
 - (void)startRunLoppForSchedule:(NSData *)waitTime
 {
-    NSLog(@"等待决策超时，调度下位");
-    [self scheduleNextPlayer];
+    if(!self.updateScheduleInLoop){
+        NSLog(@"等待决策超时，调度下位");
+        [self scheduleNextPlayer];
+    }
+    
+    //重置调度更新标识
+    self.updateScheduleInLoop = NO;
 }
 
 
@@ -333,33 +347,39 @@ static NSLock *isOpen;
     //清理
     self.centralTableViewCtrl = nil;
     
+    //决策等待时间
+    decisionTime = waitingTine;
+    
     //将角色列表广播出去
     NSLog(@"广播角色列表");
+    NSNumber *waitTime = [NSNumber numberWithFloat:decisionTime] ;    //决策等待时间
     for (int idx=0; idx < self.centralsMgr.centralsList.count; ++idx) {
         CBCentral *sendCentral = [self.centralsMgr.centralsList objectAtIndex:idx];
-        NSMutableArray *sendData = (NSMutableArray*)[self deviceList];
-        [sendData insertObject:[NSNumber numberWithInt:idx+2] atIndex:0];
+        NSMutableArray *sendArray = (NSMutableArray*)[self deviceList];
+        [sendArray insertObject:[NSNumber numberWithInt:idx + 2] atIndex:0];           //中心的顺序
+        [sendArray insertObject:waitTime atIndex:1];
         
-        NSMutableString *sendStr = [[NSMutableString alloc] init];
-        for (NSString *name in sendData) {
-            [sendStr appendFormat:@"%@#", name];
-        }
-        NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
+        NSData *deviceData = [NSData dataFromArray:sendArray connection:@"#"];
+        
+//        NSMutableString *sendStr = [[NSMutableString alloc] init];
+//        for (NSString *name in sendData) {
+//            [sendStr appendFormat:@"%@#", name];
+//        }
+//        NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
         [self updateCharacteristics:self.nameCharacteristic withValue:deviceData to:@[sendCentral]];
         
     }
     //代理返回设备列表名，包括外设+中心
     DISPATCH_GLOBAL(^{
         currentPlayer = 1;
-        [_delegate playersList:[self deviceList] error:nil];
+        [_delegate playersList:[self deviceList] wait:decisionTime];
         //更新调度
         DISPATCH_GLOBAL(^{
             [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
         });
     });
     
-    //开始事件循环，周期为 decisionTime
-    decisionTime = waitingTine;
+    //开始事件循环，周期为decisionTime
     NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
     [NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
     

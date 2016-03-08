@@ -13,14 +13,16 @@
 #import "Constants.h"
 #import "Payload.h"
 #import "PeripheralListViewController.h"
+#import "NSObject+Format.h"
 
 static NSLock *isPrepare;
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 {
-    NSString    *centralName;
+    NSString   *centralName;
     NSUInteger currentPlayer;
     NSUInteger selfIndex;
+    CGFloat    decisionTime;
 }
 
 @property (strong, nonatomic) id<BlelanDelegate>           delegate;
@@ -333,15 +335,21 @@ static NSLock *isPrepare;
     if([characteristic.UUID isEqual:[CBUUID UUIDWithString:BROADCASTNAMECHARACTERUUID]]){
         //设备列表更新
         NSString *recvStr = [[NSString alloc] initWithData:characteristic.value encoding:NSUTF8StringEncoding];
-        NSString *trimStr = [Helper trimRight:recvStr component:@"#"];
-        NSArray *recvData = [trimStr componentsSeparatedByString:@"#"];
-        NSLog(@"player列表，%@", recvData);
-        NSNumber *num = [recvData objectAtIndex:0];
-        selfIndex = num.intValue;
-        NSArray *deviceList = [recvData subarrayWithRange:NSMakeRange(1, recvData.count-1)];
+        
+        NSArray *recvArray = [NSString getArrayFromString:recvStr by:@"#"];
+        
+        //NSString *trimStr = [Helper trimRight:recvStr component:@"#"];
+        //NSArray *recvData = [trimStr componentsSeparatedByString:@"#"];
+        NSLog(@"player列表，%@", recvArray);
+        NSNumber *num = [recvArray objectAtIndex:0];
+        selfIndex = num.intValue;               //获取当前中心的操作顺序
+        num = [recvArray objectAtIndex:1];
+        decisionTime = num.floatValue;          //获取决策等待时间
+        
+        NSArray *deviceList = [recvArray subarrayWithRange:NSMakeRange(2, recvArray.count-2)];
         //返回玩家列表
         DISPATCH_GLOBAL(^{
-            [_delegate playersList:deviceList error:nil];
+            [_delegate playersList:deviceList wait:decisionTime];
             //房主先出牌
             currentPlayer = 1;
             //更新调度

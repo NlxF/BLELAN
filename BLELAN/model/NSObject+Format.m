@@ -11,7 +11,7 @@
 @implementation NSObject (Format)
 
 
-- (NSArray *)getArrayFromString:(NSString *)rawString by:(NSString*)separated
++ (NSArray *)getArrayFromString:(NSString *)rawString by:(NSString*)separated
 {
     NSString *trimStr;
     if ([rawString hasSuffix:separated])
@@ -24,7 +24,7 @@
     return recvData;
 }
 
-- (NSData *)dataFromArray:(NSArray *)array connection:(NSString *)connectionString
++ (NSData *)dataFromArray:(NSArray *)array connection:(NSString *)connectionString
 {
     
     NSMutableString *send = [[NSMutableString alloc] init];

@@ -321,7 +321,7 @@ static NSLock *isOpen;
 - (void)startRunLoppForSchedule:(NSData *)waitTime
 {
     if(!self.updateScheduleInLoop){
-        NSLog(@"等待决策超时，调度下位");
+        NSLog(@"等待决策超时，调度");
         [self scheduleNextPlayer];
     }
     
@@ -329,6 +329,15 @@ static NSLock *isOpen;
     self.updateScheduleInLoop = NO;
 }
 
+
+- (void)kickAll
+{
+    
+    for (CBCentral *obj in [self.centralsMgr.centralsList reverseObjectEnumerator]) {
+        NSInteger idx = [self.centralsMgr indexOfObject:obj];
+        [self kickOne:idx];
+    }
+}
 
 #pragma mark - myPeripheralDelegate
 - (void)exchangePosition:(NSUInteger)from to:(NSUInteger)to
@@ -353,19 +362,17 @@ static NSLock *isOpen;
     //将角色列表广播出去
     NSLog(@"广播角色列表");
     NSNumber *waitTime = [NSNumber numberWithFloat:decisionTime] ;    //决策等待时间
+    
     for (int idx=0; idx < self.centralsMgr.centralsList.count; ++idx) {
+        
         CBCentral *sendCentral = [self.centralsMgr.centralsList objectAtIndex:idx];
-        NSMutableArray *sendArray = (NSMutableArray*)[self deviceList];
-        [sendArray insertObject:[NSNumber numberWithInt:idx + 2] atIndex:0];           //中心的顺序
-        [sendArray insertObject:waitTime atIndex:1];
+        NSMutableArray *sendArray = (NSMutableArray*)[self deviceList];  //返回以“NULL”开头，包括外设的设备列表
+        [sendArray insertObject:[NSNumber numberWithInt:idx + 2] atIndex:0];     //当前中心的顺序
+        [sendArray insertObject:waitTime atIndex:1];                     //统一决策时间
         
         NSData *deviceData = [NSData dataFromArray:sendArray connection:@"#"];
         
-//        NSMutableString *sendStr = [[NSMutableString alloc] init];
-//        for (NSString *name in sendData) {
-//            [sendStr appendFormat:@"%@#", name];
-//        }
-//        NSData *deviceData = [sendStr dataUsingEncoding:NSUTF8StringEncoding];
+        //添加到发送队列
         [self updateCharacteristics:self.nameCharacteristic withValue:deviceData to:@[sendCentral]];
         
     }
@@ -379,7 +386,7 @@ static NSLock *isOpen;
         });
     });
     
-    //开始事件循环，周期为decisionTime
+    //开始决策事件循环，周期为decisionTime
     NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
     [NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
     
@@ -396,6 +403,7 @@ static NSLock *isOpen;
     //将中心从管理器中删除
     [self.centralsMgr removeCentral:theOne];
 }
+
 
 #pragma mark - Peripheral Manager Delegate Methods
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral

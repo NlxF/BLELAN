@@ -338,8 +338,6 @@ static NSLock *isPrepare;
         
         NSArray *recvArray = [NSString getArrayFromString:recvStr by:@"#"];
         
-        //NSString *trimStr = [Helper trimRight:recvStr component:@"#"];
-        //NSArray *recvData = [trimStr componentsSeparatedByString:@"#"];
         NSLog(@"player列表，%@", recvArray);
         NSNumber *num = [recvArray objectAtIndex:0];
         selfIndex = num.intValue;               //获取当前中心的操作顺序

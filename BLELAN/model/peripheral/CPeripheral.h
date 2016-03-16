@@ -36,4 +36,6 @@
 
 - (NSArray *)deviceList;
 
+- (void)kickAll;
+
 @end

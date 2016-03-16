@@ -117,6 +117,16 @@
     }
 }
 
+- (void)stop
+{
+    if (_peripheral) {
+        [self.peripheral kickAll];
+        self.peripheral = nil;
+    }else if (_central){
+        [self.central leaveRoom];
+        self.central = nil;
+    }
+}
 #pragma mark -  as a peripheral
 /**  启动设备，作为外设开启广播
  */
@@ -157,4 +167,6 @@
     
     [self.central scan];
 }
+
+
 @end

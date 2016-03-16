@@ -60,6 +60,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 - (void)setDecisionTime:(CGFloat)utime;
 
+- (void)stopLight;
 /***************************peripheral*********************************/
 
 - (void)createRoom:(NSString *)roomName;

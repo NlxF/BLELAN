@@ -24,21 +24,27 @@
     [super viewDidLoad];
     
     UIButton *btn1 = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    btn1.frame = CGRectMake(40, 80, 100, 50);
+    btn1.frame = CGRectMake(40, 40, 100, 50);
     [btn1 setTitle:@"作为外设启动" forState:UIControlStateNormal];
     [btn1 addTarget:self action:@selector(startAsPeripheral) forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:btn1];
     
     UIButton *btn11 = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    btn11.frame = CGRectMake(180, 80, 100, 50);
+    btn11.frame = CGRectMake(180, 40, 100, 50);
     [btn11 setTitle:@"作为中心启动" forState:UIControlStateNormal];
     [btn11 addTarget:self action:@selector(startAsCentral) forControlEvents:UIControlEventTouchDown];
     [self.view addSubview:btn11];
     
-    _textView = [[UITextView alloc] initWithFrame:CGRectMake(40, 120, 240, 400)];
+    _textView = [[UITextView alloc] initWithFrame:CGRectMake(40, 90, 240, 400)];
     _textView.backgroundColor = [UIColor grayColor];
     _textView.editable = NO;
     [self.view addSubview:_textView];
+    
+    UIButton *stopBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    stopBtn.frame = CGRectMake(110, 500, 100, 50);
+    [stopBtn setTitle:@"停止" forState:UIControlStateNormal];
+    [stopBtn addTarget:self action:@selector(stop) forControlEvents:UIControlEventTouchDown];
+    [self.view addSubview:stopBtn];
     
 }
 
@@ -83,6 +89,13 @@ static NSString *sendData;
     rowIdx = 1;
 }
 
+- (void)stop
+{
+    if (_ligjtair != nil) {
+        [_ligjtair stopLight];
+        [self AddRow:@"停止"];
+    }
+}
 
 #pragma mark - BlelanDelegate
 - (void)recvData:(NSData *)data

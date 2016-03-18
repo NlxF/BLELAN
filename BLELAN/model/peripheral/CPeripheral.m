@@ -161,13 +161,15 @@ static NSLock *isOpen;
 
 - (void)dispatchMessage:(NSData *)mesage from:(NSUInteger)src
 {
-    //将数据广播出去
-    if([self.centralsMgr.centralsList count] >= 1){
+    //将数据广播出去,当src不为1时，只有2个及其以上中心设备才需要转发
+    if((src != 1 && [self.centralsMgr.centralsList count] >= 2) || src == 1){
+        
         NSMutableArray *notifyCentral = [[NSMutableArray alloc] initWithArray:self.centralsMgr.centralsList];
-        if (src != 1) {
+        
+        if (src != 1)
             [notifyCentral removeObjectAtIndex:src-2];        //角色列表中第0为NULL，第1为外设
-        }
-        FrameType gameType    = MakeGameFrame;
+        
+        FrameType gameType = MakeGameFrame;
         for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:src type:gameType])
         {
             [self updateCharacteristics:self.gameCharacteristic withValue:value to:notifyCentral];
@@ -175,7 +177,7 @@ static NSLock *isOpen;
     }
     
     //更新中心调度
-    NSLog(@"转发，更新调度");
+    NSLog(@"转发完，更新调度");
     [self scheduleNextPlayer];
     
 }
@@ -186,23 +188,6 @@ static NSLock *isOpen;
         //分发
         NSLog(@"更新数据传输特性,%@", mesage);
         [self dispatchMessage:mesage from:1];
-        
-        //轮到自己出牌
-        /*FrameType gameType    = MakeGameFrame;
-        for (NSData *value in [[PayloadMgr defaultManager] payloadFromData:mesage dst:0 src:selfIndex type:gameType]){
-            NSLog(@"更新数据传输特性,%@", value);
-            [self updateCharacteristics:_gameCharacteristic withValue:value to:self.centralsMgr.centralsList];
-        }
-        //更新当前出牌对象
-        NSLog(@"更新调度");
-        NSUInteger nextPlayer = [self scheduleNextPlayer];
-        NSData *data          = [NSData dataWithBytes:&nextPlayer length:sizeof(nextPlayer)];
-        [self updateCharacteristics:_scheduleCharacteristic withValue:data to:self.centralsMgr.centralsList];
-        
-        //更新调度
-        DISPATCH_GLOBAL(^{
-            [_delegate UpdateScheduleIndex:currentPlayer selfIndex:selfIndex];
-        });*/
         
         return YES;
     }
@@ -289,12 +274,13 @@ static NSLock *isOpen;
     @synchronized(self.queue) {
         [self.queue addObject:@{QUEUECHARACTER: character, QUEUEVALUE: value, QUEUETO: notifyObjs}];
     }
+    
     [self processCharacteristicsUpdateQueue];
 }
 
 - (BOOL)updateCharacteristic:(NSDictionary*)queueData
 {
-    NSLog(@"发送数据");
+    NSLog(@"发送数据，%@", queueData[QUEUEVALUE]);
     return [self.peripheralMgr updateValue:queueData[QUEUEVALUE] forCharacteristic:queueData[QUEUECHARACTER] onSubscribedCentrals:queueData[QUEUETO]];
     
 }
@@ -302,19 +288,25 @@ static NSLock *isOpen;
 - (void)processCharacteristicsUpdateQueue
 {
     NSDictionary *queueData = [self.queue firstObject];
-    if (queueData != nil) {
-        while ([self updateCharacteristic:queueData]) {
+    while (queueData != nil) {
+        
+         if([self updateCharacteristic:queueData]) {
             @synchronized(self.queue) {
+                
                 [self.queue removeObjectAtIndex:0];
             }
+             
             queueData = [self.queue firstObject];
-            if (queueData == nil) {
-                NSLog(@"队列为空，结束发送");
-                break;
-            }
-        }
-        NSLog(@"系统底层队列已满，等待空余");
+
+         }else{
+             
+             NSLog(@"系统底层队列已满，结束发送，等待空余.");
+             break;
+         }
     }
+    
+    if(queueData == nil)
+        NSLog(@"发送队列为空，结束发送.");
 }
 
 #pragma mark - 开始决策时间等待事件循环
@@ -388,7 +380,7 @@ static NSLock *isOpen;
     
     //开始决策事件循环，周期为decisionTime
     NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
-    [NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
+    //[NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
     
 }
 
@@ -543,6 +535,7 @@ static NSLock *isOpen;
 - (void)peripheralManagerIsReadyToUpdateSubscribers:(CBPeripheralManager *)peripheral
 {
     NSLog(@"底层传输队列有可用空间,重新发送");
+    
     [self processCharacteristicsUpdateQueue];
 }
 

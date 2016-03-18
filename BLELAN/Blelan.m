@@ -113,16 +113,20 @@
 - (void)setDecisionTime:(CGFloat)utime
 {
     if (utime > 0) {
+        
         _decisionTime = utime;
     }
 }
 
-- (void)stop
+- (void)stopLight
 {
-    if (_peripheral) {
+    if (_peripheral != nil) {
+        
         [self.peripheral kickAll];
         self.peripheral = nil;
-    }else if (_central){
+    }
+    if (_central != nil){
+        
         [self.central leaveRoom];
         self.central = nil;
     }

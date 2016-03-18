@@ -15,10 +15,10 @@
 #import "PeripheralListViewController.h"
 #import "NSObject+Format.h"
 
-static NSLock *isPrepare;
 
 @interface CCentral() <CBCentralManagerDelegate, CBPeripheralDelegate>
 {
+    NSLock     *isPrepare;
     NSString   *centralName;
     NSUInteger currentPlayer;
     NSUInteger selfIndex;
@@ -65,8 +65,9 @@ static NSLock *isPrepare;
 
 - (void)dealloc
 {
-    isPrepare = nil;
     NSLog(@"析构 central对象");
+    
+    isPrepare = nil;
 }
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate

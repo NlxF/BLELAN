@@ -16,10 +16,12 @@
 #import "NSObject+Format.h"
 
 
-static NSLock *isOpen;
+//static NSLock *isOpen;
 
 @interface CPeripheral() <CBPeripheralManagerDelegate>
 {
+    NSLock     *isOpen;
+    
     NSUInteger selfIndex;
     NSUInteger playerNums;
     CGFloat    decisionTime;
@@ -76,7 +78,7 @@ static NSLock *isOpen;
 
 - (void)dealloc
 {
-    isOpen = nil;
+    //isOpen = nil;
     NSLog(@"析构 peripheral对象");
 }
 

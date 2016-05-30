@@ -72,7 +72,7 @@ static NSString *sendData;
     
     [_ligjtair createRoom:@"ROOM-3"];
     _textView.text = @"As Peripheral:\n\n";
-    sendData = @"1";//2345678901234567890123456789012345678901234567890";
+    sendData = @"#";//12345678901234567890123456789012345678901234567890";
     rowIdx = 1;
 }
 
@@ -109,6 +109,7 @@ static NSString *sendData;
     for (int idx = 1; idx < playerList.count; idx++) {
         [self AddRow:[NSString stringWithFormat:@"角色:%@", playerList[idx]]];
     }
+    [self AddRow:[NSString stringWithFormat:@"决策时间：%f", time]];
 }
 
 
@@ -118,7 +119,7 @@ static NSString *sendData;
     
     //外设首发
     if (currentIndex == selfIndex) {
-        [NSThread sleepForTimeInterval:5];
+        [NSThread sleepForTimeInterval:.5];
         sendData = [NSString stringWithFormat:@"%@#", sendData];
         if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]])
             [self AddRow:[[NSString alloc] initWithFormat:@"发送数据:%@", sendData]];

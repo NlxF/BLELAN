@@ -31,6 +31,7 @@
 @property (strong, nonatomic) CBCharacteristic             *gameCharacteristic;
 @property (strong, nonatomic) CBCharacteristic             *kickCharacteristic;
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
+
 @property (weak,   nonatomic) UIViewController             *attachedViewController;
 
 @property (strong,    atomic) NSMutableArray               *allPeripherals;
@@ -67,7 +68,7 @@
 {
     NSLog(@"析构 central对象");
     
-    isPrepare = nil;
+    //isPrepare = nil;
 }
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate
@@ -90,8 +91,10 @@
         _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中..."];
         _peripheralListView.delegate = self;
         [_peripheralListView showTableView:_attachedViewController animated:YES];
-    }else
+    }else{
+        
         NSLog(@"准备扫描超时");
+    }
 }
 
 /*
@@ -255,12 +258,33 @@
 
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
-    if (central.state != CBCentralManagerStatePoweredOn) {
+    if(central.state == CBCentralManagerStatePoweredOff){
+        DISPATCH_MAIN(^{
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:nil message:@"蓝牙已关闭，是否去设置打开" preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                NSURL *url = [NSURL URLWithString:@"prefs:root=Bluetooth"];
+                if ([[UIApplication sharedApplication]canOpenURL:url]) {
+                    [[UIApplication sharedApplication]openURL:url];
+                }
+            }];
+            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"cancel" style:UIAlertActionStyleCancel handler:nil];
+            
+            [alert addAction:cancelAction];
+            [alert addAction:okAction];
+            
+            [_attachedViewController.view.window.rootViewController presentViewController:alert animated:YES completion:nil];
+        });
+    
+    }else if (central.state == CBCentralManagerStateUnsupported) {
         // In a real app, you'd deal with all the states correctly
+        ALERT(_attachedViewController.view.window.rootViewController, nil, @"此设备的蓝牙不支持");
         return;
+    }else if(central.state == CBCentralManagerStatePoweredOn){
+        
+        NSLog(@"蓝牙已准备好,可以开始扫描");
+        [isPrepare unlock];
     }
-    NSLog(@"蓝牙已准备好,可以开始扫描");
-    [isPrepare unlock];
+    
 }
 
 #pragma mark - peripheral delegate

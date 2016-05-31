@@ -41,7 +41,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
  *  当为策略类型时，返回当前操作者索引，索引基于playerList
  *
  *  @param currentIndex 当前动作角色索引
- *  @param selfIndex    角色索引
+ *  @param selfIndex    自身角色索引
  */
 - (void)UpdateScheduleIndex:(NSUInteger)currentIndex selfIndex:(NSUInteger)selfIndex;
 
@@ -52,7 +52,7 @@ FOUNDATION_EXPORT const unsigned char BLELANVersionString[];
 
 /*******************************common*********************************/
 
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)root;
+- (instancetype)initWithPlayerName:(NSString*)name;
 
 - (BOOL)sendData:(NSData *)data;
 

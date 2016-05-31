@@ -12,12 +12,22 @@
 #import "../third/FBShimmering/FBShimmeringView.h"
 
 
-#define ALERT(parent, title, msg)   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title \
+#define ALERT(title, msg)   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title \
                                                                                                    message:msg \
                                                                                             preferredStyle:UIAlertControllerStyleAlert]; \
                                     UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){}]; \
                                     [alert addAction:defaultAction]; \
-                                    [parent presentViewController:alert animated:YES completion:nil];
+                                    [[[UIApplication sharedApplication] keyWindow].rootViewController presentViewController:alert animated:YES completion:nil];
+
+//#define ALERT(parent, title, msg)   UIAlertController *alert = [UIAlertController alertControllerWithTitle:title \
+//message:msg \
+//preferredStyle:UIAlertControllerStyleAlert]; \
+//UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"ok" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){}]; \
+//[alert addAction:defaultAction]; \
+//[parent presentViewController:alert animated:YES completion:nil];
+
+
+#define ROOTVC [[UIApplication sharedApplication] keyWindow].rootViewController
 
 /**
  *  中心和外设分别需要实现的协议

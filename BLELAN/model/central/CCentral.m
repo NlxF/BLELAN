@@ -32,7 +32,7 @@
 @property (strong, nonatomic) CBCharacteristic             *kickCharacteristic;
 @property (strong, nonatomic) PeripheralListViewController *peripheralListView;
 
-@property (weak,   nonatomic) UIViewController             *attachedViewController;
+//@property (weak,   nonatomic) UIViewController             *attachedViewController;
 
 @property (strong,    atomic) NSMutableArray               *allPeripherals;
 @end
@@ -40,7 +40,7 @@
 @implementation CCentral
 
 #pragma mark - CCentral methods
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc
+- (instancetype)initWithPlayerName:(NSString*)name
 {
     self = [super init];
     if (self) {
@@ -58,8 +58,6 @@
         
         //中心名，用于在外设显示
         centralName = name;
-        
-        _attachedViewController = rootvc;
     }
     return self;
 }
@@ -90,7 +88,7 @@
         
         _peripheralListView = [[PeripheralListViewController alloc] initWithTitle:@"搜索中..."];
         _peripheralListView.delegate = self;
-        [_peripheralListView showTableView:_attachedViewController animated:YES];
+        [_peripheralListView showTableView:ROOTVC animated:YES];
     }else{
         
         NSLog(@"准备扫描超时");
@@ -223,7 +221,7 @@
                 [self.peripheralListView refreshList];
         }];
         [alert addAction:defaultAction];
-        [_attachedViewController presentViewController:alert animated:YES completion:nil];
+        [ROOTVC presentViewController:alert animated:YES completion:nil];
     });
     
     [self cleanup];
@@ -272,12 +270,12 @@
             [alert addAction:cancelAction];
             [alert addAction:okAction];
             
-            [_attachedViewController.view.window.rootViewController presentViewController:alert animated:YES completion:nil];
+            [ROOTVC presentViewController:alert animated:YES completion:nil];
         });
     
     }else if (central.state == CBCentralManagerStateUnsupported) {
         // In a real app, you'd deal with all the states correctly
-        ALERT(_attachedViewController.view.window.rootViewController, nil, @"此设备的蓝牙不支持");
+        ALERT(nil, @"此设备的蓝牙不支持");
         return;
     }else if(central.state == CBCentralManagerStatePoweredOn){
         
@@ -294,7 +292,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error
 {
     if (error) {
-        ALERT(_attachedViewController, @"搜索服务失败", [error localizedDescription]);
+        ALERT(@"搜索服务失败", [error localizedDescription]);
         [self cleanup];
         return;
     }
@@ -311,7 +309,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error
 {
     if (error) {
-        ALERT(_attachedViewController, @"探索特性失败", [error localizedDescription]);
+        ALERT(@"探索特性失败", [error localizedDescription]);
         return;
     }
     
@@ -352,7 +350,7 @@
 {
     if (error) {
         DISPATCH_MAIN(^{
-            ALERT(_attachedViewController, @"接受数据失败", [error localizedDescription]);
+            ALERT(@"接受数据失败", [error localizedDescription]);
         });
         return;
     }

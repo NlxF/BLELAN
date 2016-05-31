@@ -33,15 +33,15 @@ typedef struct
 /*
  * 定义蓝牙传输的有效载荷
  *
- * _________________________________________________________
- * |目的地址|  源地址  |    类型  | 全局索引   | 分帧索引  |    数据    |
+ * ___________________________________________________________
+ * | 目的地址| 源地址 |   类型  | 全局索引 | 分帧索引  |   数据  |
  * |___1B___|___1B___|___2B___|____2B____|____1B____|___50B___|
  * |------------------帧头------------------|--数据--|
  * 目的地址：为外设或者中心对象在设备列表中的索引值
  * 源地址：为外设或者中心对象在设备列表中的索引值
  * 类型：高4位广播还是点播，低四位游戏数据还是聊天内容。
  * 全局索引：一次会话中的索引，最大65535。
- * 分帧索引：如果一次通信数据长度超过20字节，则需要分帧，用来表示帧顺序。
+ * 分帧索引：如果一次通信数据长度超过50字节，则需要分帧，用来表示帧顺序, 最大分帧数256。
  * 数据：传输的内容，一次最大发送50字节=25汉字。
  */
 typedef struct
@@ -52,7 +52,6 @@ typedef struct
     UInt16  global;                             //全局索引，65535循环。
     UInt8 local;                                //分帧索引, 0表示没有分帧，最高位1表示当前是最后一桢。
     char  data[FRAMEDATALEN];                   //传输的内容。
-    
 } Payload;
 
 
@@ -73,7 +72,7 @@ typedef struct
  *
  *  @return nsdata的数组，一个nsdata代表一个帧
  */
-- (NSArray *)payloadFromString:(NSString *)content dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type;
+- (NSArray<NSData*> *)payloadFromString:(NSString *)content dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type;
 
 /**
  *  传入要发送的data，返回有效载荷数组。
@@ -85,18 +84,17 @@ typedef struct
  *
  *  @return nsdata的数组，一个nsdata代表一个帧
  */
-- (NSArray *)payloadFromData:(NSData *)data dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type;
+- (NSArray<NSData*> *)payloadFromData:(NSData *)data dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type;
 
 /**
- *  一帧一帧传入，如果传入的帧有分帧，则全部到达之后才返回值
+ *  一帧一帧传入，如果传入的帧有分帧，则等待全部到达之后才返回值
  *
- *  @param payload 帧数据
+ *  @param payload  帧数据
  *  @param retValue 有效数据或者nil，当为nil时，表示分帧还未全部到达。
- *  @param src   源的索引
+ *  @param src      源的索引
  *
  *  @return content类型，可能为字符串或者业务逻辑数据
  */
 - (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue src:(NSUInteger *)src;
-
 
 @end

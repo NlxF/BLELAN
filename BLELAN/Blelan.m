@@ -24,7 +24,7 @@
 @property (nonatomic, strong) CCentral<CentralDelegate>            *central;
 @property (nonatomic, strong) CPeripheral<PeripheralDelegate>      *peripheral;
 @property (nonatomic, strong) id<BlelanDelegate>                   delegate;
-@property (nonatomic,   weak) UIViewController                     *rootController;
+//@property (nonatomic,   weak) UIViewController                     *rootController;
 @end
 
 
@@ -34,20 +34,17 @@
 /**
  *  初始化类
  *
- *  @param name 指定初始化名称
+ *  @param name 指定角色名称
  *
- *  @param vc root视图
- *
- *  @return LightAir实例
+ *  @return LightLAN实例
  */
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)root
+- (instancetype)initWithPlayerName:(NSString*)name
 {
     self = [super init];
     if (self) {
         _name = name;
         _isStarted = NO;
         _decisionTime = 5.0;
-        _rootController = root;
         
         //注册关闭ROOM通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closeRoom:) name:CLOSEROOMNOTF object:nil];
@@ -138,7 +135,7 @@
 {
     self.central = nil;
 
-    self.peripheral = [[CPeripheral alloc] initWithName:_name attached:_rootController];
+    self.peripheral = [[CPeripheral alloc] initWithPlayerName:_name];
     
     [self.peripheral setDelegate:_delegate];
     
@@ -152,7 +149,8 @@
         [self.peripheral startRoomWith:_decisionTime];
         
     }else{
-        ALERT(_rootController, @"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
+        
+        ALERT(@"设备类型错误", @"设备只有作为外设启动时才能开启游戏");
     }
 }
 
@@ -165,7 +163,7 @@
     //先释放掉别的
     self.peripheral = nil;
 
-    self.central = [[CCentral alloc] initWithName:_name attached:_rootController];
+    self.central = [[CCentral alloc] initWithPlayerName:_name];
 
     [self.central setDelegate:_delegate];
     

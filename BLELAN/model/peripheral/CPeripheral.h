@@ -22,7 +22,7 @@
 
 @interface CPeripheral : NSObject <PeripheralDelegate, myPeripheralDelegate>
 
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc;
+- (instancetype)initWithPlayerName:(NSString*)name;
 
 - (void)startAdvertising:(NSString *)roomName;
 

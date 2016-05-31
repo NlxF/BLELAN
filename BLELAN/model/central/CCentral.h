@@ -24,7 +24,7 @@
 
 @interface CCentral : NSObject <CentralDelegate, myCentralDelegate>
 
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc;
+- (instancetype)initWithPlayerName:(NSString*)name;
 
 - (void)scan;
 
@@ -33,7 +33,4 @@
 - (void)leaveRoom;
 
 - (void)setDelegate:(id<BlelanDelegate>)delegate;
-
-- (void)setAttachedViewController:(UIViewController *)fvc;
-
 @end

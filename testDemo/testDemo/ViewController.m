@@ -57,6 +57,8 @@
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         _textView.text = [_textView.text stringByAppendingFormat:@"%lu.%@\n", (unsigned long)rowIdx++, string];
+        CGPoint offset = CGPointMake(0, self.textView.contentSize.height - self.textView.frame.size.height);
+        [self.textView setContentOffset:offset animated:YES];
     });
 }
 
@@ -65,9 +67,9 @@ static NSString *sendData;
 - (void)startAsPeripheral
 {
     if (_ligjtair == nil) {
-        _ligjtair = [[LightLAN alloc] initWithName:@"player-1" attached:self];
+        _ligjtair = [[LightLAN alloc] initWithPlayerName:@"player-1"];
         [_ligjtair setDelegate:self];
-        [_ligjtair setDecisionTime:5];
+        [_ligjtair setDecisionTime:0.5];
     }
     
     [_ligjtair createRoom:@"ROOM-3"];
@@ -79,7 +81,7 @@ static NSString *sendData;
 - (void)startAsCentral
 {
     if (_ligjtair == nil) {
-        _ligjtair = [[LightLAN alloc] initWithName:@"player-3" attached:self];
+        _ligjtair = [[LightLAN alloc] initWithPlayerName:@"player-3"];
         [_ligjtair setDelegate:self];
     }
     
@@ -124,7 +126,6 @@ static NSString *sendData;
         if([_ligjtair sendData:[sendData dataUsingEncoding:NSUTF8StringEncoding]])
             [self AddRow:[[NSString alloc] initWithFormat:@"发送数据:%@", sendData]];
     }
-
 }
 
 @end

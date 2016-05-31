@@ -13,12 +13,15 @@
     //发送的总的payload个数
     UInt16 globalIdx;
     //缓存
-    char payloadBuff[512];
+    //char payloadBuff[512];
     //是否返回值
     bool isNotify;
     //当前帧global索引
     //UInt16 curGlobal;
 }
+
+//索引下值的缓存，{@1: {@1: nsdata, @2: nsdata, ...}, ...}
+@property (nonatomic, strong)   NSMutableDictionary*  payloadBuff;
 @end
 
 @implementation PayloadMgr
@@ -39,7 +42,8 @@
     if (self) {
         globalIdx = 0;
         //curGlobal = 1;
-        memset(payloadBuff, '\0', sizeof(payloadBuff));
+        [self.payloadBuff removeAllObjects];
+        //memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
     }
     return self;
@@ -62,7 +66,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
     return arr;
 };
 
-- (NSArray *)payloadFromData:(NSData *)data dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type
+- (NSArray<NSData*> *)payloadFromData:(NSData *)data dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type
 {
     NSMutableArray *payloadArray = [[NSMutableArray alloc] init];
     
@@ -91,7 +95,7 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
 }
 
 
-- (NSArray *)payloadFromString:(NSString *)content dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type
+- (NSArray<NSData*> *)payloadFromString:(NSString *)content dst:(UInt8)dstIdx src:(UInt8)srcIdx type:(FrameType)type
 {
     NSMutableArray *payloadArray = [[NSMutableArray alloc] init];
     
@@ -105,39 +109,61 @@ NSArray*(^cutBytesByLength)(NSData *data, int len) = ^NSArray*(NSData *data, int
 
 - (FrameType)contentFromPayload:(NSData *)payload out:(id*)retValue src:(NSUInteger *)src
 {
-    Payload p;
+    
     NSData *retData;
+    Payload p;
     memset(&p, '\0', sizeof(p));
     [payload getBytes:&p length:[payload length]];
+    NSData *oneBuff = [NSData dataWithBytes:p.data length:strlen(p.data)];
     if (p.local == 0) {
-        strcpy(payloadBuff, p.data);
+        
         isNotify = YES;
     }else{
+        
+        NSNumber *key = [NSNumber numberWithInt:p.global];
+        NSMutableDictionary *innerBuff = [self.payloadBuff objectForKey:key];
+        if ([innerBuff count] == 0) {
+            
+            innerBuff = [[NSMutableDictionary alloc] initWithObjectsAndKeys:oneBuff, [NSNumber numberWithChar:p.local], nil];
+        }else{
+            
+            [innerBuff setObject:oneBuff forKey:[NSNumber numberWithChar:p.local]];
+        }
+        [self.payloadBuff setObject:innerBuff forKey:key];
+        
         if (isFinish(p.local)){
+            
+            NSMutableData *tmpBuff = [[NSMutableData alloc] init];
+            for (int idx=0; idx<[innerBuff count]; idx++) {
+                NSData *ininData = [innerBuff objectForKey:[NSNumber numberWithChar:(char)idx]];
+                [tmpBuff appendData:ininData];
+            }
+            oneBuff = (NSData*)tmpBuff;
+            [self.payloadBuff removeObjectForKey:key];
             isNotify = YES;
         }
-//        else if(p.local == 1)
-//            curGlobal = p.global;
-//        
-//        if (curGlobal == p.local) {
-//            strcat(payloadBuff, p.data);
-//        }
-        strcat(payloadBuff, p.data);
-        
     }
     FrameType retType;
     if (isNotify) {
+        
         *src = p.src;
-        retData = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];
+        //retData = [NSData dataWithBytes:payloadBuff length:strlen(payloadBuff)];
+        retData = oneBuff;
         if (isGameFrame(p.FType)) {
             FrameType tmp = MakeGameFrame;
             retType = tmp;
             *retValue = retData;
         }
-        memset(payloadBuff, '\0', sizeof(payloadBuff));
         isNotify = NO;
     }
     return retType;
 }
 
+
+- (NSMutableDictionary* )payloadBuff{
+    if (_payloadBuff == nil) {
+        _payloadBuff = [[NSMutableDictionary alloc] init];
+    }
+    return _payloadBuff;
+}
 @end

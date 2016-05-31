@@ -38,7 +38,7 @@
 @property (nonatomic, strong) CentralManager             *centralsMgr;
 @property (nonatomic, strong) id<BlelanDelegate>         delegate;
 @property (nonatomic, strong) CentralListViewController  *centralTableViewCtrl;
-@property (nonatomic,   weak) UIViewController           *attachedViewController;
+//@property (nonatomic,   weak) UIViewController           *attachedViewController;
 
 @property (nonatomic, strong) NSMutableArray             *queue;
 
@@ -50,7 +50,7 @@
 @implementation CPeripheral
 
 #pragma mark - custom methods
-- (instancetype)initWithName:(NSString*)name attached:(UIViewController *)rootvc
+- (instancetype)initWithPlayerName:(NSString*)name
 {
     self = [super init];
     if (self) {
@@ -70,8 +70,6 @@
         currentPlayer = 0;
         //周期内是否已更新调度
         _updateScheduleInLoop = NO;
-        
-        _attachedViewController = rootvc;
     }
     return self;
 }
@@ -98,7 +96,7 @@
             DISPATCH_MAIN(^{
                 self.centralTableViewCtrl = [[CentralListViewController alloc] initWithTitle:@"等待加入"];
                 self.centralTableViewCtrl.delegate = self;
-                [self.centralTableViewCtrl showTableView:self.attachedViewController animated:YES];
+                [self.centralTableViewCtrl showTableView:ROOTVC animated:YES];
                 NSLog(@"显示连接设备列表");
             });
         }else{
@@ -381,7 +379,7 @@
     });
     
     //开始决策事件循环，周期为decisionTime
-    NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
+    //NSData *decisionData = [NSData dataWithBytes:&decisionTime length:sizeof(decisionTime)];
     //[NSThread detachNewThreadSelector:@selector(startRunLoppForSchedule:) toTarget:self withObject:decisionData];
     
 }
@@ -428,7 +426,7 @@
 {
     if (error)
     {
-        ALERT(_attachedViewController, @"服务发布失败", [error localizedDescription]);
+        ALERT(@"服务发布失败", [error localizedDescription]);
         return;
     }
     NSLog(@"发布服务成功");
@@ -441,7 +439,7 @@
 {
     if (error)
     {
-        ALERT(_attachedViewController, @"广播失败", [error localizedDescription]);
+        ALERT(@"广播失败", [error localizedDescription]);
         return;
     }
     NSLog(@"开始广播");
